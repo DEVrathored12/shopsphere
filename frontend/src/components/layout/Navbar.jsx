@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, LayoutDashboard, Heart, Clock, User, LogOut, Store } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Avatar from "../ui/Avatar";
@@ -54,7 +55,7 @@ export default function Navbar() {
           <span className="text-lg font-semibold text-primary">ShopSphere</span>
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-1 relative">
           {NAV_LINKS.map((link) => (
             <NavLink
               key={link.to}
@@ -62,12 +63,24 @@ export default function Navbar() {
               end={link.end}
               className={({ isActive }) =>
                 cn(
-                  "px-3.5 py-2 rounded-lg text-sm font-medium transition-colors",
-                  isActive ? "text-accent" : "text-primary hover:bg-background"
+                  "relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors group",
+                  isActive ? "text-accent" : "text-primary hover:text-accent"
                 )
               }
             >
-              {link.label}
+              {({ isActive }) => (
+                <>
+                  {link.label}
+                  <motion.span
+                    className="absolute bottom-0 left-2 right-2 h-0.5 bg-accent rounded-full"
+                    initial={false}
+                    animate={{ scaleX: isActive ? 1 : 0, opacity: isActive ? 1 : 0 }}
+                    whileHover={{ scaleX: 1, opacity: 1 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    style={{ originX: 0 }}
+                  />
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
