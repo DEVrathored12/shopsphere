@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Compass,
   Grid3x3,
@@ -89,56 +90,83 @@ export default function Home() {
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-b from-accent/[0.06] to-transparent" />
         <div className="container-app relative py-16 sm:py-24 flex flex-col items-center text-center">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent bg-accent/10 rounded-full px-3 py-1.5 mb-6">
+          <motion.span
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-accent bg-accent/10 rounded-full px-3 py-1.5 mb-6"
+          >
             <Sparkles className="w-3.5 h-3.5" /> Local shops, right at your fingertips
-          </span>
+          </motion.span>
 
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-primary leading-[1.1] max-w-3xl">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-primary leading-[1.1] max-w-3xl"
+          >
             Find what you need.
             <br />
             Right around the corner.
-          </h1>
+          </motion.h1>
 
-          <p className="text-secondary text-base sm:text-lg mt-5 max-w-xl">
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-secondary text-base sm:text-lg mt-5 max-w-xl"
+          >
             Discover local shops, explore their products, check prices and connect directly with
             businesses near you.
-          </p>
+          </motion.p>
 
-          <div className="w-full max-w-2xl mt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="w-full max-w-2xl mt-8"
+          >
             <SearchBar value={query} onChange={setQuery} onSubmit={handleSearch} />
-          </div>
+          </motion.div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
-            <Button icon={Compass} onClick={() => navigate("/explore")}>
-              Explore Shops
-            </Button>
-            <Button variant="outline" icon={Grid3x3} onClick={() => navigate("/categories")}>
-              Browse Categories
-            </Button>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-wrap items-center justify-center gap-3 mt-6"
+          >
+            <Button icon={Compass} onClick={() => navigate("/explore")}>Explore Shops</Button>
+            <Button variant="outline" icon={Grid3x3} onClick={() => navigate("/categories")}>Browse Categories</Button>
             <button
-              type="button"
-              onClick={locate}
-              disabled={locating}
+              type="button" onClick={locate} disabled={locating}
               className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-accent transition-colors px-2 disabled:opacity-60"
             >
               <LocateFixed className="w-4 h-4" />
               {locating ? "Locating..." : coords ? "Location set" : "Use my location"}
             </button>
-          </div>
+          </motion.div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-2 mt-8"
+          >
             <span className="text-xs text-secondary mr-1">Popular:</span>
-            {POPULAR_SEARCHES.map((term) => (
-              <button
+            {POPULAR_SEARCHES.map((term, i) => (
+              <motion.button
                 key={term}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + i * 0.05 }}
                 type="button"
                 onClick={() => handleSearch(term)}
                 className="text-xs font-medium text-primary bg-white border border-border rounded-full px-3 py-1.5 hover:border-accent hover:text-accent transition-colors"
               >
                 {term}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 

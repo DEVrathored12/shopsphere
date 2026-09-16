@@ -2,10 +2,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap");
 
 @theme {
-  --color-background: #F8F7F3;
-  --color-primary: #171717;
-  --color-secondary: #6B6B6B;
-  --color-accent: #D97706;
+  --color-background: #FAF9F6;
+  --color-primary: #0B1F33;
+  --color-secondary: #667085;
+  --color-accent: #C9A227;
   --color-white: #FFFFFF;
   --color-border: #E7E3DC;
   --color-success: #15803D;
