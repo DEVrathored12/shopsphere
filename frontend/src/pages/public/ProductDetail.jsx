@@ -174,7 +174,7 @@ export default function ProductDetail() {
                 icon={Navigation}
                 onClick={() =>
                   window.open(
-                    buildDirectionsUrl(hasCoords ? { latitude: lat, longitude: lng } : { address: `${shop.address || ""}, ${location}` }),
+                    shop.mapLink || buildDirectionsUrl(hasCoords ? { latitude: lat, longitude: lng } : { address: `${shop.address || ""}, ${location}` }),
                     "_blank",
                     "noopener"
                   )

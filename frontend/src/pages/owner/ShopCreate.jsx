@@ -16,7 +16,7 @@ export default function OwnerShopCreate() {
   const [errors, setErrors] = useState([]);
   const [form, setForm] = useState({
     shopName: "", category: "", customCategory: "", description: "", phone: "", whatsapp: "",
-    address: "", area: "", city: "", state: "", pincode: "",
+    address: "", area: "", city: "", state: "", pincode: "", mapLink: "",
     website: "", instagram: "", coverImage: "",
     openingHours: defaultOpeningHours(),
   });
@@ -106,6 +106,13 @@ export default function OwnerShopCreate() {
           <Input label="State" value={form.state} onChange={(e) => set({ state: e.target.value })} />
           <Input label="Pincode" value={form.pincode} onChange={(e) => set({ pincode: e.target.value })} />
         </div>
+        <Input
+          label="Google Maps Link"
+          placeholder="https://maps.google.com/?q=..."
+          value={form.mapLink}
+          onChange={(e) => set({ mapLink: e.target.value })}
+        />
+        <p className="text-xs text-secondary -mt-2">Paste your shop's Google Maps share link so customers can get exact directions.</p>
 
         <SectionTitle>Opening Hours</SectionTitle>
         <OpeningHoursEditor value={form.openingHours} onChange={(v) => set({ openingHours: v })} />

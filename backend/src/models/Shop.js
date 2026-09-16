@@ -89,6 +89,11 @@ const shopSchema = new Schema(
       trim: true,
       default: "",
     },
+    mapLink: {
+      type: String,
+      trim: true,
+      default: "",
+    },
 
     address: {
       type: String,

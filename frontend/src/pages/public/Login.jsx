@@ -26,11 +26,18 @@ export default function Login() {
     setSubmitting(true);
     try {
       const loggedInUser = await login(form);
-      const fallback =
+      const from = location.state?.from?.pathname;
+      // Don't redirect to a route that belongs to a different role
+      const safeFallback =
         loggedInUser.role === "admin" ? "/admin"
         : loggedInUser.role === "shop_owner" ? "/owner/dashboard"
         : "/dashboard";
-      navigate(location.state?.from?.pathname || fallback, { replace: true });
+      const dest = from && from.startsWith(
+        loggedInUser.role === "admin" ? "/admin"
+        : loggedInUser.role === "shop_owner" ? "/owner"
+        : "/"
+      ) ? from : safeFallback;
+      navigate(dest, { replace: true });
     } catch (err) {
       setError(err.message || "Login failed. Please check your credentials.");
     } finally {

@@ -1,5 +1,6 @@
 import Review from "../models/Review.js";
 import Shop from "../models/Shop.js";
+import mongoose from "mongoose";
 import { sendSuccess, ApiError } from "../utils/apiResponse.js";
 import { isOwnerOrAdmin } from "../utils/ownership.js";
 import { parsePagination, buildPaginationMeta } from "../utils/queryHelpers.js";
@@ -10,8 +11,9 @@ import { parsePagination, buildPaginationMeta } from "../utils/queryHelpers.js";
  * Shop.rating never drifts from what customers have actually left.
  */
 const recalcShopRating = async (shopId) => {
+  const id = new mongoose.Types.ObjectId(String(shopId));
   const [agg] = await Review.aggregate([
-    { $match: { shopId } },
+    { $match: { shopId: id } },
     { $group: { _id: "$shopId", average: { $avg: "$rating" }, count: { $sum: 1 } } },
   ]);
 

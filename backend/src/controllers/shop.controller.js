@@ -28,6 +28,7 @@ const OWNER_EDITABLE_FIELDS = [
   "coverImage",
   "galleryImages",
   "isActive",
+  "mapLink",
 ];
 
 // Fields only an admin may write via update, on top of the above.
@@ -200,6 +201,7 @@ export const createShop = async (req, res, next) => {
       location,
       coverImage,
       galleryImages,
+      mapLink,
     } = req.body;
 
     const categoryDoc = await Category.findById(category);
@@ -223,6 +225,7 @@ export const createShop = async (req, res, next) => {
       location,
       coverImage,
       galleryImages,
+      mapLink,
     });
 
     return sendSuccess(res, {
