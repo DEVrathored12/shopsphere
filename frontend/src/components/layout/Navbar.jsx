@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { to: "/categories", label: "Categories" },
   { to: "/for-business", label: "For Business" },
   { to: "/about", label: "About" },
+  { to: "/tutorial", label: "Tutorial" },
 ];
 
 function dashboardPathFor(role) {
