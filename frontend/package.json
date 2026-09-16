@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@rive-app/react-canvas": "^4.34.2",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.20.0",
     "framer-motion": "^13.2.0",
