@@ -1,6 +1,6 @@
 import ItemRequest from "../models/ItemRequest.js";
 import Shop from "../models/Shop.js";
-import { ApiResponse, ApiError } from "../utils/apiResponse.js";
+import { sendSuccess, ApiError } from "../utils/apiResponse.js";
 
 // POST /api/requests — customer creates a request
 export const createRequest = async (req, res, next) => {
@@ -15,7 +15,7 @@ export const createRequest = async (req, res, next) => {
       shopId: shopId || null,
     });
 
-    res.status(201).json(new ApiResponse(201, "Request posted", { request }));
+    return sendSuccess(res, { statusCode: 201, message: "Request posted", data: { request } });
   } catch (err) {
     next(err);
   }
@@ -47,7 +47,7 @@ export const getRequestsForOwner = async (req, res, next) => {
       };
     });
 
-    res.json(new ApiResponse(200, "OK", { requests: data, shop }));
+    return sendSuccess(res, { data: { requests: data, shop } });
   } catch (err) {
     next(err);
   }
@@ -61,7 +61,7 @@ export const getMyRequests = async (req, res, next) => {
       .populate("responses.ownerId", "name phone")
       .sort({ createdAt: -1 });
 
-    res.json(new ApiResponse(200, "OK", { requests }));
+    return sendSuccess(res, { data: { requests } });
   } catch (err) {
     next(err);
   }
@@ -86,7 +86,7 @@ export const respondToRequest = async (req, res, next) => {
     request.responses.push({ shopId: shop._id, ownerId: req.user._id, status });
     await request.save();
 
-    res.json(new ApiResponse(200, "Response saved", { status }));
+    return sendSuccess(res, { message: "Response saved", data: { status } });
   } catch (err) {
     next(err);
   }
@@ -114,7 +114,7 @@ export const sendMessage = async (req, res, next) => {
     await request.save();
 
     const msg = request.messages[request.messages.length - 1];
-    res.status(201).json(new ApiResponse(201, "Sent", { message: msg }));
+    return sendSuccess(res, { statusCode: 201, message: "Sent", data: { message: msg } });
   } catch (err) {
     next(err);
   }
@@ -135,7 +135,7 @@ export const getMessages = async (req, res, next) => {
       throw new ApiError(403, "Not authorized");
     }
 
-    res.json(new ApiResponse(200, "OK", { messages: request.messages }));
+    return sendSuccess(res, { data: { messages: request.messages } });
   } catch (err) {
     next(err);
   }
