@@ -7,7 +7,6 @@ import {
   Store,
   MapPin,
   Globe,
-  Instagram,
   Clock,
   ImageOff,
 } from "lucide-react";
@@ -246,7 +245,7 @@ function OverviewTab({ shop }) {
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm text-accent hover:underline"
           >
-            <Instagram className="w-4 h-4 shrink-0" /> Instagram
+            <Globe className="w-4 h-4 shrink-0" /> Instagram
           </a>
         )}
         {shop.website && (

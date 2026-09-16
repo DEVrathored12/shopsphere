@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Store, Pencil, Trash2, Plus, Phone, MapPin, Globe, Instagram } from "lucide-react";
+import { Store, Pencil, Trash2, Plus, Phone, MapPin, Globe } from "lucide-react";
 
 import { useAsync } from "../../hooks/useAsync";
 import { useAuth } from "../../context/AuthContext";
@@ -86,7 +86,7 @@ export default function OwnerShop() {
             <InfoRow icon={MapPin} text={[shop.address, shop.area, shop.city, shop.state, shop.pincode].filter(Boolean).join(", ")} />
             <InfoRow icon={Phone} text={shop.phone} />
             {shop.website && <InfoRow icon={Globe} text={shop.website} href={shop.website} />}
-            {shop.instagram && <InfoRow icon={Instagram} text={`@${shop.instagram}`} href={`https://instagram.com/${shop.instagram}`} />}
+            {shop.instagram && <InfoRow icon={Globe} text={`@${shop.instagram}`} href={`https://instagram.com/${shop.instagram}`} />}
           </div>
 
           <div className="flex gap-3 mt-6 pt-5 border-t border-border">
