@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
@@ -29,6 +29,36 @@ export default function Login() {
   const isHandsUp   = useStateMachineInput(rive, STATE_MACHINE, "isHandsUp");
   const isSuccess   = useStateMachineInput(rive, STATE_MACHINE, "isSuccess");
   const numLook     = useStateMachineInput(rive, STATE_MACHINE, "numLook");
+
+  // ── Character touch / hover handlers ──
+  const riveContainerRef = useRef(null);
+  const pokeTimer = useRef(null);
+
+  const handleCharacterPointer = (e) => {
+    if (!riveContainerRef.current || !numLook) return;
+    // Only react when no form field is active
+    if (isHandsUp?.value || isChecking?.value) return;
+    const rect = riveContainerRef.current.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const x = (clientX - rect.left) / rect.width; // 0 → 1
+    numLook.value = Math.round(x * 100);
+  };
+
+  const handleCharacterClick = () => {
+    if (isHandsUp?.value) return;
+    // Quick peek: isChecking on → off after 600ms
+    if (isChecking) {
+      isChecking.value = true;
+      clearTimeout(pokeTimer.current);
+      pokeTimer.current = setTimeout(() => { if (isChecking) isChecking.value = false; }, 600);
+    }
+  };
+
+  const handleCharacterLeave = () => {
+    if (isChecking?.value || isHandsUp?.value) return;
+    // Reset eyes to centre
+    if (numLook) numLook.value = 50;
+  };
 
   // ── Input handlers ──
   const handleEmailFocus = () => {
@@ -162,7 +192,15 @@ export default function Login() {
           </div>
 
           {/* ── Rive character ── */}
-          <div className="w-48 h-48 mx-auto mb-2">
+          <div
+            ref={riveContainerRef}
+            className="w-48 h-48 mx-auto mb-2 cursor-pointer select-none"
+            onMouseMove={handleCharacterPointer}
+            onMouseLeave={handleCharacterLeave}
+            onTouchMove={handleCharacterPointer}
+            onClick={handleCharacterClick}
+            onTouchEnd={handleCharacterClick}
+          >
             <RiveComponent />
           </div>
 

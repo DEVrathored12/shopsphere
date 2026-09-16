@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
@@ -47,7 +47,33 @@ export default function Register() {
   const isSuccess  = useStateMachineInput(rive, STATE_MACHINE, "isSuccess");
   const numLook    = useStateMachineInput(rive, STATE_MACHINE, "numLook");
 
-  const handleChange = (e) => {
+  // ── Character touch / hover handlers ──
+  const riveContainerRef = useRef(null);
+  const pokeTimer = useRef(null);
+
+  const handleCharacterPointer = (e) => {
+    if (!riveContainerRef.current || !numLook) return;
+    if (isHandsUp?.value || isChecking?.value) return;
+    const rect = riveContainerRef.current.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const x = (clientX - rect.left) / rect.width;
+    numLook.value = Math.round(x * 100);
+  };
+
+  const handleCharacterClick = () => {
+    if (isHandsUp?.value) return;
+    if (isChecking) {
+      isChecking.value = true;
+      clearTimeout(pokeTimer.current);
+      pokeTimer.current = setTimeout(() => { if (isChecking) isChecking.value = false; }, 600);
+    }
+  };
+
+  const handleCharacterLeave = () => {
+    if (isChecking?.value || isHandsUp?.value) return;
+    if (numLook) numLook.value = 50;
+  };
+
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
     if (name === "name" || name === "email" || name === "phone") {
@@ -168,7 +194,15 @@ export default function Register() {
           </motion.div>
 
           {/* Rive character */}
-          <div className="w-48 h-48 mx-auto">
+          <div
+            ref={riveContainerRef}
+            className="w-48 h-48 mx-auto cursor-pointer select-none"
+            onMouseMove={handleCharacterPointer}
+            onMouseLeave={handleCharacterLeave}
+            onTouchMove={handleCharacterPointer}
+            onClick={handleCharacterClick}
+            onTouchEnd={handleCharacterClick}
+          >
             <RiveComponent />
           </div>
 
