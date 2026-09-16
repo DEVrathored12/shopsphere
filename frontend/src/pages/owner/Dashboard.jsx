@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { Store, Package, Plus, ArrowRight, Star, Eye, Heart, CheckCircle2 } from "lucide-react";
+import { Store, Package, Plus, ArrowRight, Star, Eye, Heart } from "lucide-react";
 
 import { useAsync } from "../../hooks/useAsync";
 import { useAuth } from "../../context/AuthContext";
 import { fetchShops } from "../../services/shopService";
 import { fetchProducts } from "../../services/productService";
-import { LoadingSkeleton, EmptyState, ErrorState, Badge, Button } from "../../components/ui";
+import { LoadingSkeleton, EmptyState, ErrorState, Badge } from "../../components/ui";
 import { formatPrice } from "../../utils/format";
 
 const COMPLETION_FIELDS = [
@@ -66,37 +66,11 @@ export default function OwnerDashboard() {
 
       {shop && (
         <>
-          {/* Profile completion */}
+          {/* Profile completion circle */}
           {completion && completion.pct < 100 && (
-            <div className="bg-white border border-border rounded-2xl p-5 mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-primary">Profile completion</p>
-                <span className="text-sm font-semibold text-accent">{completion.pct}%</span>
-              </div>
-              <div className="w-full h-2 bg-border rounded-full overflow-hidden mb-3">
-                <div
-                  className="h-full bg-accent rounded-full transition-all"
-                  style={{ width: `${completion.pct}%` }}
-                />
-              </div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {completion.fields.map(({ key, label }) => {
-                  const done = completion.doneKeys.has(key);
-                  return (
-                    <span
-                      key={key}
-                      className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${
-                        done ? "border-success/30 bg-success/10 text-success" : "border-border text-secondary"
-                      }`}
-                    >
-                      {done && <CheckCircle2 className="w-3 h-3" />}
-                      {label}
-                    </span>
-                  );
-                })}
-              </div>
-              <Link to="/owner/shop/edit">
-                <Button size="sm" variant="outline">Complete Profile</Button>
+            <div className="flex justify-end mb-4">
+              <Link to="/owner/shop/edit" title={`Profile ${completion.pct}% complete — click to finish`}>
+                <ProfileCircle pct={completion.pct} />
               </Link>
             </div>
           )}
@@ -178,6 +152,30 @@ export default function OwnerDashboard() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function ProfileCircle({ pct }) {
+  const r = 18;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  return (
+    <div className="relative w-12 h-12 group">
+      <svg width="48" height="48" className="-rotate-90">
+        <circle cx="24" cy="24" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-border" />
+        <circle
+          cx="24" cy="24" r={r} fill="none" stroke="currentColor" strokeWidth="4"
+          strokeDasharray={`${dash} ${circ}`}
+          className="text-accent transition-all"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-accent">
+        {pct}%
+      </span>
+      <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover:block bg-primary text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+        Profile {pct}% complete
+      </div>
     </div>
   );
 }
