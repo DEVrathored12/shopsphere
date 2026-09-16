@@ -44,6 +44,25 @@ export default function ShopDetail() {
 
   const { data, loading, error, retry } = useAsync(() => fetchShopById(shopId), [shopId]);
 
+  useEffect(() => {
+    if (!data?.shop) return;
+    const { shop, category } = data;
+    recordView({
+      type: "shop",
+      id: shop._id,
+      snapshot: {
+        name: shop.shopName,
+        image: shop.coverImage,
+        category: category?.name,
+        rating: shop.rating,
+        totalReviews: shop.totalReviews,
+        city: shop.city,
+        area: shop.area,
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.shop?._id]);
+
   if (loading) {
     return (
       <div className="container-app py-8">
@@ -64,23 +83,6 @@ export default function ShopDetail() {
   const { shop, category, products = [], gallery = [] } = data;
 
   const isFavorite = favorites.shopIds.has(String(shop._id));
-
-  useEffect(() => {
-    recordView({
-      type: "shop",
-      id: shop._id,
-      snapshot: {
-        name: shop.shopName,
-        image: shop.coverImage,
-        category: category?.name,
-        rating: shop.rating,
-        totalReviews: shop.totalReviews,
-        city: shop.city,
-        area: shop.area,
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shop._id]);
 
   const open = isShopOpenNow(shop.openingHours);
   const location = [shop.area, shop.city].filter(Boolean).join(", ");

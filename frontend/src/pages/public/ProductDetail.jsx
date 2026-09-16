@@ -29,6 +29,26 @@ export default function ProductDetail() {
     [productId, coords?.latitude, coords?.longitude]
   );
 
+  useEffect(() => {
+    if (!data?.product) return;
+    const { product } = data;
+    const shop = product.shopId;
+    recordView({
+      type: "product",
+      id: product._id,
+      snapshot: {
+        name: product.name,
+        image: product.images?.[0],
+        price: product.price,
+        priceType: product.priceType,
+        availability: product.availability,
+        shopName: shop?.shopName,
+        shopId: shop?._id,
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.product?._id]);
+
   if (loading) {
     return (
       <div className="container-app py-8">
@@ -54,23 +74,6 @@ export default function ProductDetail() {
   const isFavorite = favorites.productIds.has(String(product._id));
   const distanceLabel = formatDistance(distanceKm);
   const location = [shop?.area, shop?.city].filter(Boolean).join(", ");
-
-  useEffect(() => {
-    recordView({
-      type: "product",
-      id: product._id,
-      snapshot: {
-        name: product.name,
-        image: product.images?.[0],
-        price: product.price,
-        priceType: product.priceType,
-        availability: product.availability,
-        shopName: shop?.shopName,
-        shopId: shop?._id,
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product._id]);
   const [lng, lat] = shop?.location?.coordinates || [0, 0];
   const hasCoords = Boolean(lat || lng);
   const waText = `Hi, I'm interested in "${product.name}" I saw on ShopSphere.`;
