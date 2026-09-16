@@ -7,7 +7,7 @@ export const setToken = (token) => localStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || "https://shopsphere-api-cwtc.onrender.com/api",
 });
 
 // Attach the bearer token to every outgoing request, if present.

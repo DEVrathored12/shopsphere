@@ -11,10 +11,18 @@ const app = express();
 // --- Security & core middleware ---
 app.use(helmet());
 
-const clientUrl = process.env.CLIENT_URL;
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "https://shopsphere-lac.vercel.app",
+  "http://localhost:5173",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: clientUrl || false, // never fall back to a wildcard in production
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      cb(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
