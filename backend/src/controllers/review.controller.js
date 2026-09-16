@@ -17,10 +17,11 @@ const recalcShopRating = async (shopId) => {
     { $group: { _id: "$shopId", average: { $avg: "$rating" }, count: { $sum: 1 } } },
   ]);
 
-  await Shop.findByIdAndUpdate(shopId, {
-    rating: agg ? Math.round(agg.average * 10) / 10 : 0,
-    totalReviews: agg ? agg.count : 0,
-  });
+  await Shop.findByIdAndUpdate(
+    shopId,
+    { rating: agg ? Math.round(agg.average * 10) / 10 : 0, totalReviews: agg ? agg.count : 0 },
+    { new: true }
+  );
 };
 
 /**
@@ -35,7 +36,7 @@ export const getReviews = async (req, res, next) => {
     const shop = await Shop.findById(shopId);
     if (!shop) throw new ApiError(404, "Shop not found");
 
-    const filter = { shopId };
+    const filter = { shopId: new mongoose.Types.ObjectId(String(shopId)) };
     const [reviews, total] = await Promise.all([
       Review.find(filter)
         .populate("userId", "name avatar")
