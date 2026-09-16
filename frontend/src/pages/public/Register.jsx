@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { UserPlus, AlertCircle, Store, Eye, EyeOff, User, Mail, Phone, Lock, ShieldCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+
+const STATE_MACHINE = "Login Machine";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -32,8 +35,31 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false);
   const [showPw, setShowPw] = useState({ password: false, confirmPassword: false });
 
-  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  // ── Rive setup ──
+  const { rive, RiveComponent } = useRive({
+    src: "/login_character.riv",
+    stateMachines: STATE_MACHINE,
+    artboard: "Teddy",
+    autoplay: true,
+  });
+  const isChecking = useStateMachineInput(rive, STATE_MACHINE, "isChecking");
+  const isHandsUp  = useStateMachineInput(rive, STATE_MACHINE, "isHandsUp");
+  const isSuccess  = useStateMachineInput(rive, STATE_MACHINE, "isSuccess");
+  const numLook    = useStateMachineInput(rive, STATE_MACHINE, "numLook");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+    if (name === "name" || name === "email" || name === "phone") {
+      if (numLook) numLook.value = Math.min(value.length * 2.5, 100);
+    }
+  };
   const togglePw = (field) => setShowPw((v) => ({ ...v, [field]: !v[field] }));
+
+  const handleTextFocus = () => { if (isChecking) isChecking.value = true; if (isHandsUp) isHandsUp.value = false; };
+  const handleTextBlur  = () => { if (isChecking) isChecking.value = false; };
+  const handlePwFocus   = () => { if (isHandsUp) isHandsUp.value = true; if (isChecking) isChecking.value = false; };
+  const handlePwBlur    = () => { if (isHandsUp) isHandsUp.value = false; };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,10 +67,11 @@ export default function Register() {
     setSubmitting(true);
     try {
       const u = await register(form);
-      navigate(u.role === "shop_owner" ? "/owner/dashboard" : "/dashboard", { replace: true });
+      if (isSuccess) isSuccess.value = true;
+      setTimeout(() => navigate(u.role === "shop_owner" ? "/owner/dashboard" : "/dashboard", { replace: true }), 1200);
     } catch (err) {
+      if (isSuccess) isSuccess.value = false;
       setErrors(err.errors?.length ? err.errors : [err.message || "Registration failed"]);
-    } finally {
       setSubmitting(false);
     }
   };
@@ -140,9 +167,14 @@ export default function Register() {
             <span className="text-xl font-bold text-primary">Shop<span className="text-accent">Sphere</span></span>
           </motion.div>
 
-          <motion.div {...fadeUp(0.2)}>
-            <p className="text-xs font-semibold tracking-widest text-accent uppercase mb-2">Get started</p>
-            <h1 className="font-display text-4xl font-bold text-primary mb-1">Create account</h1>
+          {/* Rive character */}
+          <div className="w-48 h-48 mx-auto">
+            <RiveComponent />
+          </div>
+
+          <motion.div {...fadeUp(0.2)} className="text-center mb-2">
+            <p className="text-xs font-semibold tracking-widest text-accent uppercase mb-1">Get started</p>
+            <h1 className="font-display text-3xl font-bold text-primary mb-1">Create account</h1>
             <p className="text-secondary text-sm">Already have one?{" "}
               <Link to="/login" className="text-accent font-semibold hover:underline">Sign in →</Link>
             </p>
@@ -213,7 +245,10 @@ export default function Register() {
                       type={isPw ? (visible ? "text" : "password") : type}
                       required={required}
                       placeholder={placeholder}
-                      value={form[name]} onChange={handleChange}
+                      value={form[name]}
+                      onChange={handleChange}
+                      onFocus={isPw ? handlePwFocus : handleTextFocus}
+                      onBlur={isPw ? handlePwBlur : handleTextBlur}
                       className="w-full rounded-2xl border border-border bg-white pl-11 pr-11 py-3.5 text-primary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all text-sm shadow-sm"
                     />
                     {isPw && (
