@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
 import {
   Compass, Grid3x3, LocateFixed, Search, Sparkles,
   MousePointerClick, Handshake, ArrowRight, Store,
@@ -175,6 +175,25 @@ export default function Home() {
   const products = useAsync(() => fetchProducts({ limit: 8, sort: "createdAt:desc" }), []);
   const shops = useAsync(() => fetchShops({ limit: 6, sort: "rating:desc" }), []);
 
+  const [locationName, setLocationName] = useState("");
+
+  const handleLocate = async () => {
+    locate();
+  };
+
+  useEffect(() => {
+    if (coords) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`)
+        .then((r) => r.json())
+        .then((d) => {
+          const addr = d.address;
+          const name = addr.suburb || addr.neighbourhood || addr.city_district || addr.town || addr.city || addr.county || "Your location";
+          setLocationName(name);
+        })
+        .catch(() => setLocationName("Location detected"));
+    }
+  }, [coords]);
+
   const handleSearch = (value) => {
     const q = value.trim();
     navigate(q ? `/explore?q=${encodeURIComponent(q)}` : "/explore");
@@ -242,13 +261,28 @@ export default function Home() {
               >
                 <Button icon={Compass} onClick={() => navigate("/explore")}>Explore Shops</Button>
                 <Button variant="outline" icon={Grid3x3} onClick={() => navigate("/categories")}>Browse Categories</Button>
-                <button
-                  type="button" onClick={locate} disabled={locating}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-accent transition-colors disabled:opacity-60"
-                >
-                  <LocateFixed className="w-4 h-4" />
-                  {locating ? "Locating..." : coords ? "Location set ✓" : "Use my location"}
-                </button>
+                <div className="flex flex-col gap-1">
+                  <button
+                    type="button" onClick={locate} disabled={locating}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-accent transition-colors disabled:opacity-60"
+                  >
+                    <LocateFixed className="w-4 h-4" />
+                    {locating ? "Detecting location…" : coords ? "Location set ✓" : "Use my location"}
+                  </button>
+                  <AnimatePresence>
+                    {locationName && (
+                      <motion.span
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="inline-flex items-center gap-1 text-xs text-secondary bg-white border border-border rounded-full px-2.5 py-1"
+                      >
+                        <MapPin className="w-3 h-3 text-accent" />
+                        {locationName}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
               </motion.div>
 
               <motion.div
