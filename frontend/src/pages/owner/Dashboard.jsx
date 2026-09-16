@@ -58,23 +58,14 @@ export default function OwnerDashboard() {
           <Store className="w-10 h-10 text-secondary/40 mx-auto mb-3" />
           <p className="font-medium text-primary mb-1">You don't have a shop yet.</p>
           <p className="text-sm text-secondary mb-5">Create your shop to start listing products.</p>
-          <Button icon={Plus} as={Link} to="/owner/shop/create">
-            <Link to="/owner/shop/create">Create Your Shop</Link>
-          </Button>
+          <Link to="/owner/shop/create" className="inline-flex items-center gap-2 text-sm font-medium text-accent border border-accent rounded-lg px-4 py-2 hover:bg-accent/10 transition-colors">
+            <Plus className="w-4 h-4" /> Create Your Shop
+          </Link>
         </div>
       )}
 
       {shop && (
         <>
-          {/* Profile completion circle */}
-          {completion && completion.pct < 100 && (
-            <div className="flex justify-end mb-4">
-              <Link to="/owner/shop/edit" title={`Profile ${completion.pct}% complete — click to finish`}>
-                <ProfileCircle pct={completion.pct} />
-              </Link>
-            </div>
-          )}
-
           {/* Shop summary card */}
           <div className="bg-white border border-border rounded-2xl p-5 mb-6">
             <div className="flex items-start justify-between gap-4">
@@ -95,9 +86,16 @@ export default function OwnerDashboard() {
                   </div>
                 </div>
               </div>
-              <Link to="/owner/shop" className="text-sm text-accent hover:underline shrink-0">
-                Manage →
-              </Link>
+              <div className="flex items-center gap-3 shrink-0">
+                {completion && completion.pct < 100 && (
+                  <Link to="/owner/shop/edit">
+                    <ProfileCircle pct={completion.pct} />
+                  </Link>
+                )}
+                <Link to="/owner/shop" className="text-sm text-accent hover:underline">
+                  Manage →
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-5 pt-5 border-t border-border">
@@ -167,13 +165,13 @@ function ProfileCircle({ pct }) {
         <circle
           cx="24" cy="24" r={r} fill="none" stroke="currentColor" strokeWidth="4"
           strokeDasharray={`${dash} ${circ}`}
-          className="text-accent transition-all"
+          className="text-accent"
         />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-accent">
         {pct}%
       </span>
-      <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover:block bg-primary text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+      <div className="pointer-events-none absolute bottom-full right-0 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-white text-xs rounded px-2 py-1 whitespace-nowrap">
         Profile {pct}% complete
       </div>
     </div>
