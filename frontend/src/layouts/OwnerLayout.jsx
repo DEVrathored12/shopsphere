@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Store, Package, Plus, Images, User, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Store, Package, Plus, Images, User, Settings, LogOut, MessageCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import DashboardShell from "./DashboardShell";
 
@@ -13,6 +13,7 @@ export default function OwnerLayout() {
     { to: "/owner/products", label: "Products", icon: Package },
     { to: "/owner/products/create", label: "Add Product", icon: Plus },
     { to: "/owner/photos", label: "Photos", icon: Images },
+    { to: "/owner/requests", label: "Requests", icon: MessageCircle },
     { to: "/owner/profile", label: "Profile", icon: User },
     { to: "/owner/settings", label: "Settings", icon: Settings },
     {

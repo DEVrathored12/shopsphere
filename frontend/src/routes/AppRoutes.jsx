@@ -35,6 +35,8 @@ import OwnerProductCreate from "../pages/owner/ProductCreate";
 import OwnerProductEdit from "../pages/owner/ProductEdit";
 import OwnerProfile from "../pages/owner/Profile";
 import OwnerPhotos from "../pages/owner/Photos";
+import OwnerRequests from "../pages/owner/Requests";
+import MyRequests from "../pages/customer/MyRequests";
 import { ComingSoon } from "../components/ui";
 
 import AdminDashboard from "../pages/admin/Dashboard";
@@ -72,6 +74,7 @@ export default function AppRoutes() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/recently-viewed" element={<RecentlyViewed />} />
           <Route path="/profile" element={<CustomerProfile />} />
+          <Route path="/my-requests" element={<MyRequests />} />
         </Route>
       </Route>
 
@@ -87,6 +90,7 @@ export default function AppRoutes() {
           <Route path="/owner/products/:id/edit" element={<OwnerProductEdit />} />
           <Route path="/owner/photos" element={<OwnerPhotos />} />
           <Route path="/owner/profile" element={<OwnerProfile />} />
+          <Route path="/owner/requests" element={<OwnerRequests />} />
           <Route path="/owner/settings" element={<ComingSoon title="Settings" />} />
         </Route>
       </Route>
