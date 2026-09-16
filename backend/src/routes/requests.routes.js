@@ -12,9 +12,9 @@ import {
 
 const router = Router();
 
-router.post("/", protect, authorize("customer"), createRequest);
+router.post("/", protect, createRequest);
 router.get("/owner", protect, authorize("shop_owner"), getRequestsForOwner);
-router.get("/customer", protect, authorize("customer"), getMyRequests);
+router.get("/customer", protect, getMyRequests);
 router.patch("/:id/respond", protect, authorize("shop_owner"), respondToRequest);
 router.post("/:id/messages", protect, sendMessage);
 router.get("/:id/messages", protect, getMessages);

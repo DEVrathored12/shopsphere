@@ -16,7 +16,7 @@ const upload = multer({
 const router = Router();
 
 // POST /api/upload  — authenticated, single image, returns { url }
-router.post("/", protect, upload.single("image"), async (req, res, next) => {
+router.post("/", upload.single("image"), async (req, res, next) => {
   try {
     if (!req.file) throw new ApiError(400, "No image file provided");
 
