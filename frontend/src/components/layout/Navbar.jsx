@@ -51,11 +51,15 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-border">
       <div className="container-app flex items-center justify-between h-16">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-            <Store className="w-[18px] h-[18px] text-white" />
+        <Link to="/" className="flex items-center gap-2 shrink-0 group">
+          <div className="relative w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+            <Store className="w-[18px] h-[18px] text-accent" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-white" />
           </div>
-          <span className="text-lg font-semibold text-primary">ShopSphere</span>
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-lg font-bold text-primary">Shop</span>
+            <span className="text-lg font-bold text-accent">Sphere</span>
+          </div>
         </Link>
 
         {/* Desktop nav — pill hover effect */}
@@ -82,7 +86,7 @@ export default function Navbar() {
                   {hoveredLink === link.to && (
                     <motion.span
                       layoutId="nav-pill"
-                      className="absolute inset-0 rounded-full bg-accent/10"
+                      className="absolute inset-0 rounded-full bg-primary/10 border border-primary/20"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
