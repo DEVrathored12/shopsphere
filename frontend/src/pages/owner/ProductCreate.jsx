@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Input, Textarea, Select, Button, LoadingSkeleton } from "../../components/ui";
+import ImageUpload from "../../components/ui/ImageUpload";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { fetchShops } from "../../services/shopService";
@@ -27,6 +28,7 @@ export default function OwnerProductCreate() {
   const [categories, setCategories] = useState([]);
   const [loadingInit, setLoadingInit] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [productImages, setProductImages] = useState([]);
   const [errors, setErrors] = useState([]);
   const [form, setForm] = useState({
     name: "", categoryId: "", description: "",
@@ -58,7 +60,7 @@ export default function OwnerProductCreate() {
         description: form.description,
         priceType: form.priceType,
         availability: form.availability,
-        images: form.images ? form.images.split("\n").map((s) => s.trim()).filter(Boolean) : [],
+        images: productImages.length ? productImages : (form.images ? form.images.split("\n").map((s) => s.trim()).filter(Boolean) : []),
         sizes: form.sizes ? form.sizes.split(",").map((s) => s.trim()).filter(Boolean) : [],
         colors: form.colors ? form.colors.split(",").map((s) => s.trim()).filter(Boolean) : [],
       };
@@ -123,12 +125,36 @@ export default function OwnerProductCreate() {
           />
         </div>
 
+        <SectionTitle>Product Images</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {productImages.map((url, i) => (
+            <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-border/20">
+              <img src={url} alt={`Product ${i+1}`} className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setProductImages((imgs) => imgs.filter((_, idx) => idx !== i))}
+                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-primary/70 text-white flex items-center justify-center hover:bg-danger"
+              >
+                <span className="text-xs">×</span>
+              </button>
+            </div>
+          ))}
+          {productImages.length < 5 && (
+            <ImageUpload
+              value={null}
+              onUpload={(url) => setProductImages((imgs) => [...imgs, url])}
+              onRemove={() => {}}
+              label=""
+              aspectRatio="aspect-square"
+            />
+          )}
+        </div>
+        <p className="text-xs text-secondary">Or paste URLs (one per line):</p>
         <Textarea
-          label="Image URLs (one per line)"
           placeholder={"https://…\nhttps://…"}
           value={form.images}
           onChange={(e) => set({ images: e.target.value })}
-          rows={3}
+          rows={2}
         />
         <Input label="Sizes (comma-separated)" placeholder="S, M, L, XL" value={form.sizes} onChange={(e) => set({ sizes: e.target.value })} />
         <Input label="Colors (comma-separated)" placeholder="Red, Blue, Black" value={form.colors} onChange={(e) => set({ colors: e.target.value })} />
@@ -140,4 +166,8 @@ export default function OwnerProductCreate() {
       </form>
     </div>
   );
+}
+
+function SectionTitle({ children }) {
+  return <p className="text-xs font-semibold text-secondary uppercase tracking-wide pt-2">{children}</p>;
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Input, Textarea, Select, Button } from "../../components/ui";
+import ImageUpload from "../../components/ui/ImageUpload";
 import OpeningHoursEditor, { defaultOpeningHours } from "../../components/ui/OpeningHoursEditor";
 import { useToast } from "../../context/ToastContext";
 import { createShop } from "../../services/shopService";
@@ -14,7 +15,7 @@ export default function OwnerShopCreate() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState([]);
   const [form, setForm] = useState({
-    shopName: "", category: "", description: "", phone: "", whatsapp: "",
+    shopName: "", category: "", customCategory: "", description: "", phone: "", whatsapp: "",
     address: "", area: "", city: "", state: "", pincode: "",
     website: "", instagram: "", coverImage: "",
     openingHours: defaultOpeningHours(),
@@ -31,7 +32,18 @@ export default function OwnerShopCreate() {
     setSubmitting(true);
     setErrors([]);
     try {
-      await createShop(form);
+      const payload = { ...form };
+      // If "other" selected, use customCategory as description prefix
+      if (form.category === "other") {
+        delete payload.category;
+        payload.description = form.customCategory
+          ? `[${form.customCategory}] ${form.description}`
+          : form.description;
+        // Use first available category as fallback (required by backend)
+        payload.category = categories[0]?._id || "";
+      }
+      delete payload.customCategory;
+      await createShop(payload);
       toast.success("Shop created!");
       navigate("/owner/shop");
     } catch (err) {
@@ -40,6 +52,11 @@ export default function OwnerShopCreate() {
       setSubmitting(false);
     }
   };
+
+  const categoryOptions = [
+    ...categories.map((c) => ({ value: c._id, label: c.name })),
+    { value: "other", label: "Other (specify below)" },
+  ];
 
   return (
     <div className="max-w-2xl">
@@ -59,9 +76,18 @@ export default function OwnerShopCreate() {
           value={form.category}
           onChange={(e) => set({ category: e.target.value })}
           placeholder="Select a category"
-          options={categories.map((c) => ({ value: c._id, label: c.name }))}
+          options={categoryOptions}
           required
         />
+        {form.category === "other" && (
+          <Input
+            label="Your Business Type *"
+            placeholder="e.g. Tailoring, Repair Shop, Salon…"
+            value={form.customCategory}
+            onChange={(e) => set({ customCategory: e.target.value })}
+            required
+          />
+        )}
         <Textarea label="Description" value={form.description} onChange={(e) => set({ description: e.target.value })} rows={3} />
 
         <SectionTitle>Contact</SectionTitle>
@@ -84,8 +110,16 @@ export default function OwnerShopCreate() {
         <SectionTitle>Opening Hours</SectionTitle>
         <OpeningHoursEditor value={form.openingHours} onChange={(v) => set({ openingHours: v })} />
 
-        <SectionTitle>Images</SectionTitle>
-        <Input label="Cover Image URL" placeholder="https://…" value={form.coverImage} onChange={(e) => set({ coverImage: e.target.value })} />
+        <SectionTitle>Cover Image</SectionTitle>
+        <ImageUpload
+          value={form.coverImage}
+          onUpload={(url) => set({ coverImage: url })}
+          onRemove={() => set({ coverImage: "" })}
+          label=""
+          aspectRatio="aspect-[3/1]"
+        />
+        <p className="text-xs text-secondary -mt-2">Or paste a URL:</p>
+        <Input placeholder="https://…" value={form.coverImage} onChange={(e) => set({ coverImage: e.target.value })} />
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={() => navigate("/owner/shop")}>Cancel</Button>

@@ -52,9 +52,25 @@ export default function Navbar() {
       <div className="container-app flex items-center justify-between h-16">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 group">
-          <div className="relative w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-            <Store className="w-[18px] h-[18px] text-accent" />
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-white" />
+          <div className="relative w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow overflow-hidden">
+            {/* Infinite loop animation behind icon */}
+            <svg
+              className="absolute inset-0 w-full h-full opacity-20"
+              viewBox="0 0 36 36"
+              fill="none"
+            >
+              <motion.path
+                d="M18 18 C12 12, 6 12, 6 18 C6 24, 12 24, 18 18 C24 12, 30 12, 30 18 C30 24, 24 24, 18 18"
+                stroke="#C9A227"
+                strokeWidth="2"
+                strokeLinecap="round"
+                fill="none"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatType: "loop" }}
+              />
+            </svg>
+            <Store className="w-[18px] h-[18px] text-accent relative z-10" />
           </div>
           <div className="flex items-baseline gap-0.5">
             <span className="text-lg font-bold text-primary">Shop</span>

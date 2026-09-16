@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Input, Textarea, Select, Button, LoadingSkeleton, ErrorState } from "../../components/ui";
+import ImageUpload from "../../components/ui/ImageUpload";
 import OpeningHoursEditor, { defaultOpeningHours } from "../../components/ui/OpeningHoursEditor";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
@@ -112,8 +113,16 @@ export default function OwnerShopEdit() {
         <SectionTitle>Opening Hours</SectionTitle>
         <OpeningHoursEditor value={form.openingHours} onChange={(v) => set({ openingHours: v })} />
 
-        <SectionTitle>Images</SectionTitle>
-        <Input label="Cover Image URL" placeholder="https://…" value={form.coverImage} onChange={(e) => set({ coverImage: e.target.value })} />
+        <SectionTitle>Cover Image</SectionTitle>
+        <ImageUpload
+          value={form.coverImage}
+          onUpload={(url) => set({ coverImage: url })}
+          onRemove={() => set({ coverImage: "" })}
+          label=""
+          aspectRatio="aspect-[3/1]"
+        />
+        <p className="text-xs text-secondary -mt-2">Or paste a URL:</p>
+        <Input placeholder="https://…" value={form.coverImage} onChange={(e) => set({ coverImage: e.target.value })} />
 
         <SectionTitle>Visibility</SectionTitle>
         <label className="flex items-center gap-2.5 cursor-pointer">

@@ -8,6 +8,7 @@ import categoryRoutes from "./categories.routes.js";
 import favoriteRoutes from "./favorites.routes.js";
 import reviewRoutes from "./reviews.routes.js";
 import adminRoutes from "./admin.routes.js";
+import uploadRoutes from "./upload.routes.js";
 
 const router = Router();
 
@@ -47,5 +48,6 @@ router.use("/categories", categoryRoutes);
 router.use("/favorites", favoriteRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/admin", adminRoutes);
+router.use("/upload", uploadRoutes);
 
 export default router;
