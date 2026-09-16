@@ -27,36 +27,43 @@ export default function Login() {
 
   const isChecking  = useStateMachineInput(rive, STATE_MACHINE, "isChecking");
   const isHandsUp   = useStateMachineInput(rive, STATE_MACHINE, "isHandsUp");
-  const isSuccess   = useStateMachineInput(rive, STATE_MACHINE, "isSuccess");
+  const trigSuccess = useStateMachineInput(rive, STATE_MACHINE, "trigSuccess");
+  const trigFail    = useStateMachineInput(rive, STATE_MACHINE, "trigFail");
   const numLook     = useStateMachineInput(rive, STATE_MACHINE, "numLook");
 
   // ── Character touch / hover handlers ──
   const riveContainerRef = useRef(null);
+  const tapCount = useRef(0);
   const pokeTimer = useRef(null);
 
   const handleCharacterPointer = (e) => {
     if (!riveContainerRef.current || !numLook) return;
-    // Only react when no form field is active
     if (isHandsUp?.value || isChecking?.value) return;
     const rect = riveContainerRef.current.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const x = (clientX - rect.left) / rect.width; // 0 → 1
-    numLook.value = Math.round(x * 100);
+    numLook.value = Math.round(((clientX - rect.left) / rect.width) * 100);
   };
 
   const handleCharacterClick = () => {
-    if (isHandsUp?.value) return;
-    // Quick peek: isChecking on → off after 600ms
-    if (isChecking) {
-      isChecking.value = true;
-      clearTimeout(pokeTimer.current);
-      pokeTimer.current = setTimeout(() => { if (isChecking) isChecking.value = false; }, 600);
+    // Cycle: happy → sad → peek → happy …
+    const cycle = tapCount.current % 3;
+    tapCount.current += 1;
+    clearTimeout(pokeTimer.current);
+    if (cycle === 0 && trigSuccess) {
+      trigSuccess.fire();
+    } else if (cycle === 1 && trigFail) {
+      trigFail.fire();
+    } else {
+      // peek reaction
+      if (isChecking) {
+        isChecking.value = true;
+        pokeTimer.current = setTimeout(() => { if (isChecking) isChecking.value = false; }, 800);
+      }
     }
   };
 
   const handleCharacterLeave = () => {
     if (isChecking?.value || isHandsUp?.value) return;
-    // Reset eyes to centre
     if (numLook) numLook.value = 50;
   };
 
@@ -87,7 +94,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       const u = await login(form);
-      if (isSuccess) isSuccess.value = true;
+      if (trigSuccess) trigSuccess.fire();
       setTimeout(() => {
         const from = location.state?.from?.pathname;
         const fallback = u.role === "admin" ? "/admin" : u.role === "shop_owner" ? "/owner/dashboard" : "/dashboard";
@@ -95,7 +102,7 @@ export default function Login() {
         navigate(from?.startsWith(prefix) ? from : fallback, { replace: true });
       }, 1200);
     } catch (err) {
-      if (isSuccess) isSuccess.value = false;
+      if (trigFail) trigFail.fire();
       setError(err.message || "Login failed. Please check your credentials.");
       setSubmitting(false);
     }

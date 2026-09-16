@@ -42,13 +42,15 @@ export default function Register() {
     artboard: "Teddy",
     autoplay: true,
   });
-  const isChecking = useStateMachineInput(rive, STATE_MACHINE, "isChecking");
-  const isHandsUp  = useStateMachineInput(rive, STATE_MACHINE, "isHandsUp");
-  const isSuccess  = useStateMachineInput(rive, STATE_MACHINE, "isSuccess");
-  const numLook    = useStateMachineInput(rive, STATE_MACHINE, "numLook");
+  const isChecking  = useStateMachineInput(rive, STATE_MACHINE, "isChecking");
+  const isHandsUp   = useStateMachineInput(rive, STATE_MACHINE, "isHandsUp");
+  const trigSuccess = useStateMachineInput(rive, STATE_MACHINE, "trigSuccess");
+  const trigFail    = useStateMachineInput(rive, STATE_MACHINE, "trigFail");
+  const numLook     = useStateMachineInput(rive, STATE_MACHINE, "numLook");
 
   // ── Character touch / hover handlers ──
   const riveContainerRef = useRef(null);
+  const tapCount = useRef(0);
   const pokeTimer = useRef(null);
 
   const handleCharacterPointer = (e) => {
@@ -56,16 +58,20 @@ export default function Register() {
     if (isHandsUp?.value || isChecking?.value) return;
     const rect = riveContainerRef.current.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const x = (clientX - rect.left) / rect.width;
-    numLook.value = Math.round(x * 100);
+    numLook.value = Math.round(((clientX - rect.left) / rect.width) * 100);
   };
 
   const handleCharacterClick = () => {
-    if (isHandsUp?.value) return;
-    if (isChecking) {
+    const cycle = tapCount.current % 3;
+    tapCount.current += 1;
+    clearTimeout(pokeTimer.current);
+    if (cycle === 0 && trigSuccess) {
+      trigSuccess.fire();
+    } else if (cycle === 1 && trigFail) {
+      trigFail.fire();
+    } else if (isChecking) {
       isChecking.value = true;
-      clearTimeout(pokeTimer.current);
-      pokeTimer.current = setTimeout(() => { if (isChecking) isChecking.value = false; }, 600);
+      pokeTimer.current = setTimeout(() => { if (isChecking) isChecking.value = false; }, 800);
     }
   };
 
@@ -74,6 +80,7 @@ export default function Register() {
     if (numLook) numLook.value = 50;
   };
 
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
     if (name === "name" || name === "email" || name === "phone") {
@@ -93,10 +100,10 @@ export default function Register() {
     setSubmitting(true);
     try {
       const u = await register(form);
-      if (isSuccess) isSuccess.value = true;
+      if (trigSuccess) trigSuccess.fire();
       setTimeout(() => navigate(u.role === "shop_owner" ? "/owner/dashboard" : "/dashboard", { replace: true }), 1200);
     } catch (err) {
-      if (isSuccess) isSuccess.value = false;
+      if (trigFail) trigFail.fire();
       setErrors(err.errors?.length ? err.errors : [err.message || "Registration failed"]);
       setSubmitting(false);
     }
