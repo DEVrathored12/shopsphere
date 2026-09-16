@@ -18,6 +18,27 @@ router.get("/health", (req, res) => {
   });
 });
 
+// ONE-TIME seed route — remove after use
+router.get("/seed-categories", async (req, res) => {
+  const secret = req.query.secret;
+  if (secret !== "shopsphere-seed-2024") return res.status(403).json({ success: false, message: "Forbidden" });
+  try {
+    const { default: Category } = await import("../models/Category.js");
+    const { default: slugify } = await import("slugify");
+    const CATS = ["Food & Grocery", "Fashion", "Electronics", "Jewellery", "Beauty", "Home & Furniture", "Gifts", "Services"];
+    const results = [];
+    for (const name of CATS) {
+      const exists = await Category.findOne({ name });
+      if (exists) { results.push(`skipped: ${name}`); continue; }
+      await Category.create({ name, slug: slugify(name, { lower: true, strict: true }) });
+      results.push(`created: ${name}`);
+    }
+    res.json({ success: true, results });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/shops", shopRoutes);
