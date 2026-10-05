@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { LocateFixed } from "lucide-react";
 
 import { Input, Textarea, Select, Button, LoadingSkeleton, ErrorState } from "../../components/ui";
 import ImageUpload from "../../components/ui/ImageUpload";
@@ -17,6 +18,7 @@ export default function OwnerShopEdit() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [errors, setErrors] = useState([]);
   const [form, setForm] = useState(null);
 
@@ -46,12 +48,29 @@ export default function OwnerShopEdit() {
           coverImage: s.coverImage || "",
           openingHours: s.openingHours || defaultOpeningHours(),
           isActive: s.isActive,
+          location: s.location || { type: "Point", coordinates: [0, 0] },
         });
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [user?._id]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const pinLocation = () => {
+    if (!navigator.geolocation) { toast.error("Geolocation not supported."); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        set({ location: { type: "Point", coordinates: [coords.longitude, coords.latitude] } });
+        setLocating(false);
+        toast.success("Location pinned!");
+      },
+      () => { toast.error("Could not get your location."); setLocating(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const hasPinnedLocation = form?.location?.coordinates?.[0] !== 0 || form?.location?.coordinates?.[1] !== 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,6 +136,17 @@ export default function OwnerShopEdit() {
           onChange={(e) => set({ mapLink: e.target.value })}
         />
         <p className="text-xs text-secondary -mt-2">Paste your shop's Google Maps share link so customers can get exact directions.</p>
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="outline" icon={LocateFixed} onClick={pinLocation} loading={locating}>
+            {hasPinnedLocation ? "Re-pin my location" : "Pin my shop location"}
+          </Button>
+          {hasPinnedLocation && (
+            <span className="text-xs text-success">
+              ✓ Location pinned ({form.location.coordinates[1].toFixed(4)}, {form.location.coordinates[0].toFixed(4)})
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-secondary -mt-2">Used to show customers how far your shop is from them.</p>
 
         <SectionTitle>Opening Hours</SectionTitle>
         <OpeningHoursEditor value={form.openingHours} onChange={(v) => set({ openingHours: v })} />
