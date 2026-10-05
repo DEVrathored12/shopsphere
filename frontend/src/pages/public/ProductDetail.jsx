@@ -110,6 +110,8 @@ export default function ProductDetail() {
           <div className="mt-1.5">
             {distanceLabel ? (
               <p className="text-sm text-secondary">{distanceLabel}</p>
+            ) : coords && !hasCoords ? (
+              <p className="text-sm text-secondary">Distance unavailable — shop has no location set</p>
             ) : (
               <button
                 type="button"

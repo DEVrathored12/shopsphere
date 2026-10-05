@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Generic async-list loader: runs `fetcher` whenever `deps` change,
@@ -7,11 +7,13 @@ import { useCallback, useEffect, useState } from "react";
  */
 export function useAsync(fetcher, deps = []) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
 
   const run = useCallback(() => {
     let cancelled = false;
     setState((s) => ({ ...s, loading: true, error: null }));
-    fetcher()
+    fetcherRef.current()
       .then((data) => {
         if (!cancelled) setState({ data, loading: false, error: null });
       })
