@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LocateFixed } from "lucide-react";
 
 import { Input, Textarea, Select, Button } from "../../components/ui";
 import ImageUpload from "../../components/ui/ImageUpload";
 import OpeningHoursEditor, { defaultOpeningHours } from "../../components/ui/OpeningHoursEditor";
+import MapPicker from "../../components/ui/MapPicker";
 import { useToast } from "../../context/ToastContext";
 import { createShop } from "../../services/shopService";
 import { fetchCategories } from "../../services/categoryService";
@@ -14,7 +14,6 @@ export default function OwnerShopCreate() {
   const toast = useToast();
   const [categories, setCategories] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [locating, setLocating] = useState(false);
   const [errors, setErrors] = useState([]);
   const [form, setForm] = useState({
     shopName: "", category: "", customCategory: "", description: "", phone: "", whatsapp: "",
@@ -30,21 +29,10 @@ export default function OwnerShopCreate() {
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  const pinLocation = () => {
-    if (!navigator.geolocation) { toast.error("Geolocation not supported."); return; }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        set({ location: { type: "Point", coordinates: [coords.longitude, coords.latitude] } });
-        setLocating(false);
-        toast.success("Location pinned!");
-      },
-      () => { toast.error("Could not get your location."); setLocating(false); },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
   const hasPinnedLocation = form.location.coordinates[0] !== 0 || form.location.coordinates[1] !== 0;
+
+  const handleMapChange = ({ lat, lng }) =>
+    set({ location: { type: "Point", coordinates: [lng, lat] } });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,17 +120,19 @@ export default function OwnerShopCreate() {
           onChange={(e) => set({ mapLink: e.target.value })}
         />
         <p className="text-xs text-secondary -mt-2">Paste your shop's Google Maps share link so customers can get exact directions.</p>
-        <div className="flex items-center gap-3">
-          <Button type="button" variant="outline" icon={LocateFixed} onClick={pinLocation} loading={locating}>
-            {hasPinnedLocation ? "Re-pin my location" : "Pin my shop location"}
-          </Button>
+        <div>
+          <p className="text-sm font-medium text-primary mb-1.5">Pin Shop Location on Map</p>
+          <p className="text-xs text-secondary mb-2">Click anywhere on the map or drag the pin to mark your exact shop location.</p>
+          <MapPicker
+            value={hasPinnedLocation ? { lat: form.location.coordinates[1], lng: form.location.coordinates[0] } : null}
+            onChange={handleMapChange}
+          />
           {hasPinnedLocation && (
-            <span className="text-xs text-success">
-              ✓ Location pinned ({form.location.coordinates[1].toFixed(4)}, {form.location.coordinates[0].toFixed(4)})
-            </span>
+            <p className="text-xs text-success mt-1.5">
+              ✓ Pinned at {form.location.coordinates[1].toFixed(5)}, {form.location.coordinates[0].toFixed(5)}
+            </p>
           )}
         </div>
-        <p className="text-xs text-secondary -mt-2">Used to show customers how far your shop is from them.</p>
 
         <SectionTitle>Opening Hours</SectionTitle>
         <OpeningHoursEditor value={form.openingHours} onChange={(v) => set({ openingHours: v })} />
