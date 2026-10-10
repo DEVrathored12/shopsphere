@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Trash2 } from "lucide-react";
+import { ShieldCheck, Trash2, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
 
 import { useAsync } from "../../hooks/useAsync";
 import { useToast } from "../../context/ToastContext";
-import { fetchAdminShops, toggleShopVerified, adminDeleteShop } from "../../services/adminService";
-import { Badge, Button, Pagination, LoadingSkeleton, ErrorState, ConfirmDialog } from "../../components/ui";
+import { fetchAdminShops, toggleShopVerified, toggleShopActive, adminDeleteShop, adminUpdateShop } from "../../services/adminService";
+import { fetchCategories } from "../../services/categoryService";
+import { Badge, Button, Input, Textarea, Select, Pagination, LoadingSkeleton, ErrorState, ConfirmDialog, Modal } from "../../components/ui";
 import { useDebounce } from "../../hooks/useDebounce";
 
 export default function AdminShops() {
@@ -14,6 +15,7 @@ export default function AdminShops() {
   const [search, setSearch] = useState("");
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(null);
   const debouncedSearch = useDebounce(search, 400);
 
   const { data, loading, error, retry } = useAsync(
@@ -25,6 +27,16 @@ export default function AdminShops() {
     try {
       await toggleShopVerified(shop._id, !shop.isVerified);
       toast.success(shop.isVerified ? "Verification removed." : "Shop verified.");
+      retry();
+    } catch (err) {
+      toast.error(err.message || "Could not update shop.");
+    }
+  };
+
+  const handleToggleActive = async (shop) => {
+    try {
+      await toggleShopActive(shop._id, !shop.isActive);
+      toast.success(shop.isActive ? "Shop deactivated." : "Shop activated.");
       retry();
     } catch (err) {
       toast.error(err.message || "Could not update shop.");
@@ -81,17 +93,18 @@ export default function AdminShops() {
                     {shop.city} · {shop.ownerId?.name} ({shop.ownerId?.email})
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0flex-wrap">
                   <Badge tone={shop.isActive ? "success" : "danger"}>{shop.isActive ? "Active" : "Inactive"}</Badge>
                   {shop.isVerified && <Badge tone="accent">Verified</Badge>}
-                  <Button
-                    size="sm"
-                    variant={shop.isVerified ? "outline" : "primary"}
-                    icon={ShieldCheck}
-                    onClick={() => handleVerify(shop)}
-                  >
+                  <Button size="sm" variant="ghost" icon={shop.isActive ? ToggleRight : ToggleLeft}
+                    className={shop.isActive ? "text-success hover:bg-success/5" : "text-secondary"}
+                    onClick={() => handleToggleActive(shop)}
+                    title={shop.isActive ? "Deactivate" : "Activate"}
+                  />
+                  <Button size="sm" variant={shop.isVerified ? "outline" : "primary"} icon={ShieldCheck} onClick={() => handleVerify(shop)}>
                     {shop.isVerified ? "Unverify" : "Verify"}
                   </Button>
+                  <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(shop)} />
                   <Button size="sm" variant="ghost" icon={Trash2} className="text-danger hover:bg-danger/5" onClick={() => setToDelete(shop)} />
                 </div>
               </div>
@@ -104,6 +117,13 @@ export default function AdminShops() {
         </>
       )}
 
+      <EditShopModal
+        shop={editing}
+        onClose={() => setEditing(null)}
+        onSaved={() => { setEditing(null); retry(); }}
+        toast={toast}
+      />
+
       <ConfirmDialog
         open={Boolean(toDelete)}
         onCancel={() => setToDelete(null)}
@@ -114,5 +134,81 @@ export default function AdminShops() {
         confirmLabel="Delete Shop"
       />
     </div>
+  );
+}
+
+function EditShopModal({ shop, onClose, onSaved, toast }) {
+  const [form, setForm] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState([]);
+
+  // Sync form when shop changes
+  const open = Boolean(shop);
+  if (open && form._id !== shop?._id) {
+    setForm({
+      _id: shop._id,
+      shopName: shop.shopName || "",
+      description: shop.description || "",
+      phone: shop.phone || "",
+      whatsapp: shop.whatsapp || "",
+      address: shop.address || "",
+      area: shop.area || "",
+      city: shop.city || "",
+      state: shop.state || "",
+      pincode: shop.pincode || "",
+      category: shop.categoryId?._id || shop.categoryId || "",
+    });
+    fetchCategories().then(setCategories).catch(() => {});
+  }
+
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setErrors([]);
+    try {
+      await adminUpdateShop(shop._id, form);
+      toast.success("Shop updated.");
+      onSaved();
+    } catch (err) {
+      setErrors(err.errors?.length ? err.errors : [err.message || "Could not update shop."]);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Edit Shop">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.length > 0 && (
+          <div className="rounded-lg bg-danger/10 text-danger text-sm px-3 py-2 space-y-0.5">
+            {errors.map((msg) => <p key={msg}>{msg}</p>)}
+          </div>
+        )}
+        <Input label="Shop Name *" value={form.shopName || ""} onChange={(e) => set({ shopName: e.target.value })} required />
+        <Select
+          label="Category"
+          value={form.category || ""}
+          onChange={(e) => set({ category: e.target.value })}
+          options={categories.map((c) => ({ value: c._id, label: c.name }))}
+        />
+        <Textarea label="Description" value={form.description || ""} onChange={(e) => set({ description: e.target.value })} rows={2} />
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Phone" value={form.phone || ""} onChange={(e) => set({ phone: e.target.value })} />
+          <Input label="WhatsApp" value={form.whatsapp || ""} onChange={(e) => set({ whatsapp: e.target.value })} />
+          <Input label="City *" value={form.city || ""} onChange={(e) => set({ city: e.target.value })} required />
+          <Input label="Area" value={form.area || ""} onChange={(e) => set({ area: e.target.value })} />
+          <Input label="State" value={form.state || ""} onChange={(e) => set({ state: e.target.value })} />
+          <Input label="Pincode" value={form.pincode || ""} onChange={(e) => set({ pincode: e.target.value })} />
+        </div>
+        <Textarea label="Address" value={form.address || ""} onChange={(e) => set({ address: e.target.value })} rows={2} />
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit" loading={submitting}>Save Changes</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

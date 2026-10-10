@@ -69,3 +69,34 @@ export const deleteCategory = async (id) => {
   const { data } = await api.delete(`/categories/${id}`);
   return data;
 };
+
+export const adminUpdateShop = async (shopId, payload) => {
+  const { data } = await api.put(`/shops/${shopId}`, payload);
+  return data.data.shop;
+};
+
+export const adminUpdateProduct = async (productId, payload) => {
+  const { data } = await api.put(`/products/${productId}`, payload);
+  return data.data.product;
+};
+
+export const fetchAdminReviews = async (params = {}) => {
+  const { data } = await api.get("/admin/reviews", { params });
+  return data.data;
+};
+
+export const adminDeleteReview = async (reviewId) => {
+  const { data } = await api.delete(`/admin/reviews/${reviewId}`);
+  return data;
+};
+
+export const fetchAdminRequests = async (params = {}) => {
+  const { data } = await api.get("/admin/requests", { params });
+  return data.data;
+};
+
+export const adminToggleRequest = async (requestId) => {
+  const { data } = await api.patch(`/admin/requests/${requestId}/toggle`);
+  return data.data.request;
+};
+

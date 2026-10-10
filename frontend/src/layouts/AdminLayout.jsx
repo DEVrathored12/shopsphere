@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Store, Package, Tag } from "lucide-react";
+import { LayoutDashboard, Users, Store, Package, Tag, Star, ClipboardList } from "lucide-react";
 import DashboardShell from "./DashboardShell";
 
 const LINKS = [
@@ -7,6 +7,8 @@ const LINKS = [
   { to: "/admin/shops", label: "Shops", icon: Store },
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/categories", label: "Categories", icon: Tag },
+  { to: "/admin/reviews", label: "Reviews", icon: Star },
+  { to: "/admin/requests", label: "Requests", icon: ClipboardList },
 ];
 
 export default function AdminLayout() {

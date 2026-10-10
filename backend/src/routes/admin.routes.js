@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Shop from "../models/Shop.js";
 import Product from "../models/Product.js";
 import Review from "../models/Review.js";
+import ItemRequest from "../models/ItemRequest.js";
 import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/role.js";
 import { sendSuccess, ApiError } from "../utils/apiResponse.js";
@@ -191,6 +192,83 @@ router.get("/products", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+/**
+ * GET /api/admin/reviews
+ * Paginated reviews across all shops, with optional shopId filter.
+ */
+router.get("/reviews", async (req, res, next) => {
+  try {
+    const { shopId } = req.query;
+    const { page, limit, skip } = parsePagination(req.query);
+    const filter = shopId ? { shopId } : {};
+    const [reviews, total] = await Promise.all([
+      Review.find(filter)
+        .populate("userId", "name avatar")
+        .populate("shopId", "shopName")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Review.countDocuments(filter),
+    ]);
+    return sendSuccess(res, { data: { reviews, pagination: buildPaginationMeta({ page, limit, total }) } });
+  } catch (err) { next(err); }
+});
+
+/**
+ * DELETE /api/admin/reviews/:id
+ */
+router.delete("/reviews/:id", async (req, res, next) => {
+  try {
+    const review = await Review.findByIdAndDelete(req.params.id);
+    if (!review) throw new ApiError(404, "Review not found");
+    // Recalc shop rating
+    const mongoose = (await import("mongoose")).default;
+    const [agg] = await Review.aggregate([
+      { $match: { shopId: new mongoose.Types.ObjectId(String(review.shopId)) } },
+      { $group: { _id: "$shopId", average: { $avg: "$rating" }, count: { $sum: 1 } } },
+    ]);
+    await Shop.findByIdAndUpdate(review.shopId, {
+      rating: agg ? Math.round(agg.average * 10) / 10 : 0,
+      totalReviews: agg ? agg.count : 0,
+    });
+    return sendSuccess(res, { message: "Review deleted" });
+  } catch (err) { next(err); }
+});
+
+/**
+ * GET /api/admin/requests
+ * Paginated item requests.
+ */
+router.get("/requests", async (req, res, next) => {
+  try {
+    const { page, limit, skip } = parsePagination(req.query);
+    const [requests, total] = await Promise.all([
+      ItemRequest.find()
+        .populate("customerId", "name email avatar")
+        .populate("shopId", "shopName")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      ItemRequest.countDocuments(),
+    ]);
+    return sendSuccess(res, { data: { requests, pagination: buildPaginationMeta({ page, limit, total }) } });
+  } catch (err) { next(err); }
+});
+
+/**
+ * PATCH /api/admin/requests/:id/toggle
+ * Toggle isActive on a request.
+ */
+router.patch("/requests/:id/toggle", async (req, res, next) => {
+  try {
+    const request = await ItemRequest.findById(req.params.id);
+    if (!request) throw new ApiError(404, "Request not found");
+    request.isActive = !request.isActive;
+    await request.save();
+    return sendSuccess(res, { message: `Request ${request.isActive ? "activated" : "deactivated"}`, data: { request } });
+  } catch (err) { next(err); }
 });
 
 export default router;

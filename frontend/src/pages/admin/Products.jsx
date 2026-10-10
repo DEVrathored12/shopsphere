@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Trash2, Package } from "lucide-react";
+import { Trash2, Package, Pencil } from "lucide-react";
 
 import { useAsync } from "../../hooks/useAsync";
 import { useToast } from "../../context/ToastContext";
-import { fetchAdminProducts, adminDeleteProduct } from "../../services/adminService";
-import { Badge, Button, Pagination, LoadingSkeleton, ErrorState, ConfirmDialog } from "../../components/ui";
+import { fetchAdminProducts, adminDeleteProduct, adminUpdateProduct } from "../../services/adminService";
+import { fetchCategories } from "../../services/categoryService";
+import { Badge, Button, Input, Textarea, Select, Pagination, LoadingSkeleton, ErrorState, ConfirmDialog, Modal } from "../../components/ui";
 import { formatPrice } from "../../utils/format";
 import { useDebounce } from "../../hooks/useDebounce";
+
+const AVAILABILITY_OPTIONS = [
+  { value: "available", label: "Available" },
+  { value: "out_of_stock", label: "Out of stock" },
+];
+
+const PRICE_TYPE_OPTIONS = [
+  { value: "fixed", label: "Fixed Price" },
+  { value: "starting_from", label: "Starting From" },
+  { value: "contact_shop", label: "Contact for Price" },
+];
 
 export default function AdminProducts() {
   const toast = useToast();
@@ -15,6 +27,7 @@ export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(null);
   const debouncedSearch = useDebounce(search, 400);
 
   const { data, loading, error, retry } = useAsync(
@@ -79,6 +92,7 @@ export default function AdminProducts() {
                   <Badge tone={product.availability === "available" ? "neutral" : "danger"}>
                     {product.availability === "available" ? "In stock" : "Out of stock"}
                   </Badge>
+                  <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(product)} />
                   <Button size="sm" variant="ghost" icon={Trash2} className="text-danger hover:bg-danger/5" onClick={() => setToDelete(product)} />
                 </div>
               </div>
@@ -91,6 +105,13 @@ export default function AdminProducts() {
         </>
       )}
 
+      <EditProductModal
+        product={editing}
+        onClose={() => setEditing(null)}
+        onSaved={() => { setEditing(null); retry(); }}
+        toast={toast}
+      />
+
       <ConfirmDialog
         open={Boolean(toDelete)}
         onCancel={() => setToDelete(null)}
@@ -101,5 +122,72 @@ export default function AdminProducts() {
         confirmLabel="Delete"
       />
     </div>
+  );
+}
+
+function EditProductModal({ product, onClose, onSaved, toast }) {
+  const [form, setForm] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState([]);
+
+  const open = Boolean(product);
+  if (open && form._id !== product?._id) {
+    setForm({
+      _id: product._id,
+      name: product.name || "",
+      description: product.description || "",
+      price: product.price ?? "",
+      priceType: product.priceType || "fixed",
+      availability: product.availability || "available",
+      categoryId: product.categoryId?._id || product.categoryId || "",
+      isActive: product.isActive,
+    });
+    fetchCategories().then(setCategories).catch(() => {});
+  }
+
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setErrors([]);
+    try {
+      await adminUpdateProduct(product._id, form);
+      toast.success("Product updated.");
+      onSaved();
+    } catch (err) {
+      setErrors(err.errors?.length ? err.errors : [err.message || "Could not update product."]);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Edit Product">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.length > 0 && (
+          <div className="rounded-lg bg-danger/10 text-danger text-sm px-3 py-2 space-y-0.5">
+            {errors.map((msg) => <p key={msg}>{msg}</p>)}
+          </div>
+        )}
+        <Input label="Name *" value={form.name || ""} onChange={(e) => set({ name: e.target.value })} required />
+        <Textarea label="Description" value={form.description || ""} onChange={(e) => set({ description: e.target.value })} rows={2} />
+        <div className="grid grid-cols-2 gap-3">
+          <Select label="Price Type" value={form.priceType || "fixed"} onChange={(e) => set({ priceType: e.target.value })} options={PRICE_TYPE_OPTIONS} />
+          <Input label="Price" type="number" value={form.price ?? ""} onChange={(e) => set({ price: e.target.value })} disabled={form.priceType === "contact_shop"} />
+          <Select label="Availability" value={form.availability || "available"} onChange={(e) => set({ availability: e.target.value })} options={AVAILABILITY_OPTIONS} />
+          <Select label="Category" value={form.categoryId || ""} onChange={(e) => set({ categoryId: e.target.value })} options={categories.map((c) => ({ value: c._id, label: c.name }))} />
+        </div>
+        <label className="flex items-center gap-2.5 cursor-pointer">
+          <input type="checkbox" checked={form.isActive ?? true} onChange={(e) => set({ isActive: e.target.checked })} className="w-4 h-4 accent-accent" />
+          <span className="text-sm text-primary">Active (visible to customers)</span>
+        </label>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit" loading={submitting}>Save Changes</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

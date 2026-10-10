@@ -44,6 +44,8 @@ import AdminUsers from "../pages/admin/Users";
 import AdminShops from "../pages/admin/Shops";
 import AdminProducts from "../pages/admin/Products";
 import AdminCategories from "../pages/admin/Categories";
+import AdminReviews from "../pages/admin/Reviews";
+import AdminRequests from "../pages/admin/Requests";
 
 export default function AppRoutes() {
   return (
@@ -103,6 +105,8 @@ export default function AppRoutes() {
           <Route path="/admin/shops" element={<AdminShops />} />
           <Route path="/admin/products" element={<AdminProducts />} />
           <Route path="/admin/categories" element={<AdminCategories />} />
+          <Route path="/admin/reviews" element={<AdminReviews />} />
+          <Route path="/admin/requests" element={<AdminRequests />} />
         </Route>
       </Route>
     </Routes>
