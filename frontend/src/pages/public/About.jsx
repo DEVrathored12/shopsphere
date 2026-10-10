@@ -31,7 +31,7 @@ const TEAM = [
     image: "/team/ritesh.jpeg",
   },
   {
-    name: "Team Member",
+    name: "Daksh",
     role: "Marketing & Growth",
     bio: "Drives awareness and helps local shops get discovered on ShopSphere.",
     image: "/team/daksh.jpeg",
