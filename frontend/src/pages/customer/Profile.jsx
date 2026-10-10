@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Mail, Phone, Pencil, KeyRound, LogOut } from "lucide-react";
 
 import { Avatar, Button, Input, Modal } from "../../components/ui";
+import ImageUpload from "../../components/ui/ImageUpload";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { updateProfile, changePassword } from "../../services/authService";
@@ -95,7 +96,21 @@ function EditProfileModal({ open, onClose, user, onSaved, toast }) {
         )}
         <Input label="Name" value={form.name} onChange={(e) => set({ name: e.target.value })} />
         <Input label="Phone" value={form.phone} onChange={(e) => set({ phone: e.target.value })} />
-        <Input label="Avatar image URL" placeholder="https://…" value={form.avatar} onChange={(e) => set({ avatar: e.target.value })} />
+        <div>
+          <p className="text-sm font-medium text-primary mb-1.5">Profile Photo</p>
+          <div className="flex items-center gap-4">
+            <Avatar src={form.avatar} name={form.name} size="lg" />
+            <div className="flex-1">
+              <ImageUpload
+                value={form.avatar}
+                onUpload={(url) => set({ avatar: url })}
+                onRemove={() => set({ avatar: "" })}
+                label=""
+                aspectRatio="aspect-square"
+              />
+            </div>
+          </div>
+        </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
