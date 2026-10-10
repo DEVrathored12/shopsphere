@@ -22,7 +22,7 @@ const TEAM = [
     name: "Darshan",
     role: "Frontend Developer",
     bio: "Crafts the user interfaces and experiences customers love.",
-    image: "/team/daksh.jpeg",
+    image: "/team/local2.jpeg",
   },
   {
     name: "Ritesh",
@@ -34,7 +34,7 @@ const TEAM = [
     name: "Team Member",
     role: "Marketing & Growth",
     bio: "Drives awareness and helps local shops get discovered on ShopSphere.",
-    image: "/team/local2.jpeg",
+    image: "/team/daksh.jpeg",
   },
   {
     name: "Bhavik",
