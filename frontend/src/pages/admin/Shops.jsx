@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Trash2, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
 
@@ -79,7 +79,7 @@ export default function AdminShops() {
               <p className="text-sm text-secondary text-center py-10">No shops found.</p>
             )}
             {data?.shops?.map((shop, i) => (
-              <div key={shop._id} className={`flex items-center gap-4 px-4 py-3 ${i !== 0 ? "border-t border-border" : ""}`}>
+              <div key={shop._id} className={`flex items-center gap-3 px-4 py-3 ${i !== 0 ? "border-t border-border" : ""}`}>
                 {shop.coverImage ? (
                   <img src={shop.coverImage} alt={shop.shopName} className="w-12 h-12 rounded-lg object-cover shrink-0" />
                 ) : (
@@ -93,19 +93,21 @@ export default function AdminShops() {
                     {shop.city} · {shop.ownerId?.name} ({shop.ownerId?.email})
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0flex-wrap">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                   <Badge tone={shop.isActive ? "success" : "danger"}>{shop.isActive ? "Active" : "Inactive"}</Badge>
                   {shop.isVerified && <Badge tone="accent">Verified</Badge>}
-                  <Button size="sm" variant="ghost" icon={shop.isActive ? ToggleRight : ToggleLeft}
-                    className={shop.isActive ? "text-success hover:bg-success/5" : "text-secondary"}
+                  <Button
+                    size="sm" variant="ghost"
+                    icon={shop.isActive ? ToggleRight : ToggleLeft}
+                    className={shop.isActive ? "text-success hover:bg-success/5" : "text-secondary hover:bg-black/5"}
                     onClick={() => handleToggleActive(shop)}
-                    title={shop.isActive ? "Deactivate" : "Activate"}
+                    title={shop.isActive ? "Deactivate shop" : "Activate shop"}
                   />
                   <Button size="sm" variant={shop.isVerified ? "outline" : "primary"} icon={ShieldCheck} onClick={() => handleVerify(shop)}>
                     {shop.isVerified ? "Unverify" : "Verify"}
                   </Button>
-                  <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(shop)} />
-                  <Button size="sm" variant="ghost" icon={Trash2} className="text-danger hover:bg-danger/5" onClick={() => setToDelete(shop)} />
+                  <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(shop)} title="Edit shop" />
+                  <Button size="sm" variant="ghost" icon={Trash2} className="text-danger hover:bg-danger/5" onClick={() => setToDelete(shop)} title="Delete shop" />
                 </div>
               </div>
             ))}
@@ -143,11 +145,9 @@ function EditShopModal({ shop, onClose, onSaved, toast }) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState([]);
 
-  // Sync form when shop changes
-  const open = Boolean(shop);
-  if (open && form._id !== shop?._id) {
+  useEffect(() => {
+    if (!shop) return;
     setForm({
-      _id: shop._id,
       shopName: shop.shopName || "",
       description: shop.description || "",
       phone: shop.phone || "",
@@ -159,8 +159,9 @@ function EditShopModal({ shop, onClose, onSaved, toast }) {
       pincode: shop.pincode || "",
       category: shop.categoryId?._id || shop.categoryId || "",
     });
+    setErrors([]);
     fetchCategories().then(setCategories).catch(() => {});
-  }
+  }, [shop?._id]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -180,7 +181,7 @@ function EditShopModal({ shop, onClose, onSaved, toast }) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Edit Shop">
+    <Modal open={Boolean(shop)} onClose={onClose} title="Edit Shop" size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         {errors.length > 0 && (
           <div className="rounded-lg bg-danger/10 text-danger text-sm px-3 py-2 space-y-0.5">
