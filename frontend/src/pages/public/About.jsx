@@ -19,13 +19,7 @@ const TEAM = [
     owner: true,
   },
   {
-    name: "Bhavik",
-    role: "Backend Developer",
-    bio: "Builds the APIs and infrastructure that power ShopSphere.",
-    image: "/team/bhavik.jpeg",
-  },
-  {
-    name: "Daksh",
+    name: "Darshan",
     role: "Frontend Developer",
     bio: "Crafts the user interfaces and experiences customers love.",
     image: "/team/daksh.jpeg",
@@ -41,6 +35,12 @@ const TEAM = [
     role: "Marketing & Growth",
     bio: "Drives awareness and helps local shops get discovered on ShopSphere.",
     image: "/team/local2.jpeg",
+  },
+  {
+    name: "Bhavik",
+    role: "Backend Developer",
+    bio: "Builds the APIs and infrastructure that power ShopSphere.",
+    image: "/team/bhavik.jpeg",
   },
 ];
 
