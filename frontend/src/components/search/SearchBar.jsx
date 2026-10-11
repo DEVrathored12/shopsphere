@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Search, Camera } from "lucide-react";
 import { cn } from "../../lib/cn";
 import FindItemModal from "./FindItemModal";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * Controlled search input used in the hero and on /explore. Submission
@@ -15,7 +16,11 @@ export default function SearchBar({
   size = "lg",
   className,
 }) {
+  const { user } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Only customers and unauthenticated visitors can post item requests
+  const canAskShops = !user || user.role === "customer";
 
   return (
     <div className="flex flex-col gap-2">
@@ -52,18 +57,20 @@ export default function SearchBar({
         </button>
       </form>
 
-      {/* Find an Item button */}
-      <button
-        type="button"
-        onClick={() => setModalOpen(true)}
-        className={cn(
-          "self-start inline-flex items-center gap-2 rounded-full border border-accent/40 text-accent font-medium hover:bg-accent/10 transition-colors",
-          size === "lg" ? "px-4 py-2 text-sm" : "px-3 py-1.5 text-xs"
-        )}
-      >
-        <Camera className="w-4 h-4" />
-        Can't find it? Ask shops
-      </button>
+      {/* Only show for customers / guests — not shop owners or admins */}
+      {canAskShops && (
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className={cn(
+            "self-start inline-flex items-center gap-2 rounded-full border border-accent/40 text-accent font-medium hover:bg-accent/10 transition-colors",
+            size === "lg" ? "px-4 py-2 text-sm" : "px-3 py-1.5 text-xs"
+          )}
+        >
+          <Camera className="w-4 h-4" />
+          Can't find it? Ask shops
+        </button>
+      )}
 
       <FindItemModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>

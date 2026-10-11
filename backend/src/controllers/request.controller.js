@@ -30,8 +30,8 @@ export const getRequestsForOwner = async (req, res, next) => {
 
     const requests = await ItemRequest.find({
       isActive: true,
+      customerId: { $ne: req.user._id }, // never show owner their own requests
       $or: [{ shopId: null }, { shopId: shop._id }],
-      // show requests with no category (broadcast all) OR matching this shop's category
       $and: [{ $or: [{ categoryId: null }, { categoryId: shop.categoryId }] }],
     })
       .populate("customerId", "name avatar")

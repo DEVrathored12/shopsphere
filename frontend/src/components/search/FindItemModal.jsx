@@ -172,9 +172,11 @@ export default function FindItemModal({ open, onClose }) {
                   <p className="text-xs text-secondary/60 text-right mt-1">{description.length}/500</p>
                 </div>
 
-                {!user && (
+                {(!user || user.role !== "customer") && (
                   <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                    You need to <a href="/login" className="underline font-medium">log in</a> to post a request.
+                    {!user
+                      ? <>You need to <a href="/login" className="underline font-medium">log in</a> as a customer to post a request.</>
+                      : "Only customers can post item requests."}
                   </p>
                 )}
 
@@ -182,7 +184,7 @@ export default function FindItemModal({ open, onClose }) {
 
                 <button
                   type="submit"
-                  disabled={loading || !user}
+                  disabled={loading || !user || user.role !== "customer"}
                   className="w-full py-3 rounded-full bg-accent text-white font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Posting…</> : categoryId ? "Send to Category Shops" : "Send to All Shops"}
