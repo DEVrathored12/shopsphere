@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LocateFixed, MapPin, Search, X, ArrowRight, Loader2 } from "lucide-react";
+import { LocateFixed, MapPin, Search, X, ArrowRight, Loader2, ChevronDown } from "lucide-react";
 
 import SearchBar from "../../components/search/SearchBar";
 import ShopCard from "../../components/cards/ShopCard";
@@ -14,8 +14,8 @@ import { getRecentlyViewed } from "../../services/recentlyViewedService";
 import { useAsync } from "../../hooks/useAsync";
 import { useAuth } from "../../context/AuthContext";
 import { useFavorites } from "../../hooks/useFavorites";
-import { useGeolocation } from "../../hooks/useGeolocation";
 import { useDebounce } from "../../hooks/useDebounce";
+import { usePersistedLocation } from "../../hooks/usePersistedLocation";
 
 function greetingWord() {
   const hour = new Date().getHours();
@@ -24,23 +24,24 @@ function greetingWord() {
   return "Good evening";
 }
 
-// ── Location Picker ──────────────────────────────────────────────────────────
-function LocationPicker({ activeCoords, locating, onLocate, onManualCoords, locationLabel, onClearLocation }) {
+// ── Location Picker ───────────────────────────────────────────────────────────
+function LocationPicker({ coords, label, locating, onLocate, onManualPick, onClear }) {
+  const [open, setOpen] = useState(false);
   const [cityInput, setCityInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [open, setOpen] = useState(false);
   const debouncedCity = useDebounce(cityInput, 500);
-  const dropdownRef = useRef();
+  const panelRef = useRef();
 
-  // Fetch geocode suggestions
+  // Geocode suggestions
   useEffect(() => {
-    if (debouncedCity.length < 3) { setSuggestions([]); setOpen(false); return; }
+    if (debouncedCity.length < 3) { setSuggestions([]); return; }
     let cancelled = false;
     setSearching(true);
-    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(debouncedCity)}&format=json&limit=5`, {
-      headers: { "Accept-Language": "en" },
-    })
+    fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(debouncedCity)}&format=json&limit=5`,
+      { headers: { "Accept-Language": "en" } }
+    )
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
@@ -49,79 +50,119 @@ function LocationPicker({ activeCoords, locating, onLocate, onManualCoords, loca
           latitude: parseFloat(r.lat),
           longitude: parseFloat(r.lon),
         })));
-        setOpen(true);
       })
-      .catch(() => { if (!cancelled) setSuggestions([]); })
+      .catch(() => {})
       .finally(() => { if (!cancelled) setSearching(false); });
     return () => { cancelled = true; };
   }, [debouncedCity]);
 
-  // Close dropdown on outside click
+  // Close on outside click
   useEffect(() => {
-    const handler = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => { if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const pickSuggestion = (s) => {
-    onManualCoords({ latitude: s.latitude, longitude: s.longitude }, s.label.split(",")[0]);
+    onManualPick({ latitude: s.latitude, longitude: s.longitude }, s.label.split(",")[0].trim());
     setCityInput("");
     setSuggestions([]);
     setOpen(false);
   };
 
+  const handleLocate = () => {
+    onLocate();
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    onClear();
+    setOpen(false);
+  };
+
   return (
-    <div className="flex flex-wrap items-center gap-2 mt-3">
-      {/* GPS */}
+    <div className="relative" ref={panelRef}>
+      {/* Trigger button */}
       <button
         type="button"
-        onClick={onLocate}
-        disabled={locating}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-accent border border-accent/30 rounded-full px-3 py-1.5 hover:bg-accent/10 transition-colors disabled:opacity-60"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 border border-border rounded-full px-4 py-2 bg-white hover:border-accent hover:bg-accent/5 transition-colors text-sm font-medium text-primary"
       >
-        {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
-        {locating ? "Detecting…" : "Use my location"}
+        <MapPin className="w-4 h-4 text-accent shrink-0" />
+        <span className="max-w-[160px] truncate">{coords ? label || "Location set" : "Set location"}</span>
+        {coords && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => { e.stopPropagation(); handleClear(); }}
+            onKeyDown={(e) => e.key === "Enter" && handleClear()}
+            className="ml-1 text-secondary hover:text-red-500 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </span>
+        )}
+        <ChevronDown className={`w-3.5 h-3.5 text-secondary transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {/* Manual city search */}
-      <div className="relative" ref={dropdownRef}>
-        <div className="flex items-center gap-1.5 border border-border rounded-full px-3 py-1.5 bg-white focus-within:ring-2 focus-within:ring-accent">
-          <Search className="w-3.5 h-3.5 text-secondary shrink-0" />
-          <input
-            value={cityInput}
-            onChange={(e) => setCityInput(e.target.value)}
-            placeholder="Search another city…"
-            className="text-sm outline-none w-40 text-primary placeholder:text-secondary/60"
-          />
-          {searching && <Loader2 className="w-3 h-3 animate-spin text-secondary shrink-0" />}
-        </div>
-
-        {open && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-border rounded-xl shadow-lg z-20 w-72 overflow-hidden">
-            {suggestions.map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => pickSuggestion(s)}
-                className="w-full text-left px-4 py-2.5 text-sm text-primary hover:bg-accent/5 flex items-start gap-2"
-              >
-                <MapPin className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
-                <span className="line-clamp-2">{s.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Active location badge */}
-      {activeCoords && (
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-accent/10 border border-accent/20 rounded-full px-3 py-1.5">
-          <MapPin className="w-3 h-3 text-accent" />
-          {locationLabel || "Location set"}
-          <button type="button" onClick={onClearLocation} className="ml-0.5 hover:text-red-500 transition-colors">
-            <X className="w-3 h-3" />
+      {/* Dropdown panel */}
+      {open && (
+        <div className="absolute top-full left-0 mt-2 bg-white border border-border rounded-2xl shadow-xl z-30 w-80 overflow-hidden">
+          {/* GPS option */}
+          <button
+            type="button"
+            onClick={handleLocate}
+            disabled={locating}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors border-b border-border disabled:opacity-60"
+          >
+            {locating
+              ? <Loader2 className="w-4 h-4 text-accent animate-spin shrink-0" />
+              : <LocateFixed className="w-4 h-4 text-accent shrink-0" />}
+            <div className="text-left">
+              <p className="text-sm font-medium text-primary">{locating ? "Detecting your location…" : "Use my current location"}</p>
+              <p className="text-xs text-secondary">Uses your device GPS</p>
+            </div>
           </button>
-        </span>
+
+          {/* City search */}
+          <div className="px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2 border border-border rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-accent">
+              <Search className="w-4 h-4 text-secondary shrink-0" />
+              <input
+                autoFocus
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
+                placeholder="Search city or area…"
+                className="flex-1 text-sm outline-none text-primary placeholder:text-secondary/60"
+              />
+              {searching && <Loader2 className="w-3.5 h-3.5 animate-spin text-secondary shrink-0" />}
+            </div>
+          </div>
+
+          {/* Suggestions */}
+          {suggestions.length > 0 && (
+            <div className="max-h-52 overflow-y-auto">
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => pickSuggestion(s)}
+                  className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left"
+                >
+                  <MapPin className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                  <span className="text-sm text-primary line-clamp-2">{s.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Empty hint */}
+          {cityInput.length > 0 && cityInput.length < 3 && (
+            <p className="px-4 py-3 text-xs text-secondary">Type at least 3 characters to search…</p>
+          )}
+          {cityInput.length >= 3 && !searching && suggestions.length === 0 && (
+            <p className="px-4 py-3 text-xs text-secondary">No locations found. Try a different name.</p>
+          )}
+        </div>
       )}
     </div>
   );
@@ -133,52 +174,18 @@ export default function CustomerDashboard() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const favorites = useFavorites();
-  const { coords: gpsCoords, loading: locating, locate } = useGeolocation();
-
-  const [manualCoords, setManualCoords] = useState(null);
-  const [locationLabel, setLocationLabel] = useState("");
-
-  // Active coords: manual takes priority over GPS
-  const activeCoords = manualCoords || gpsCoords;
-
-  // Reverse-geocode GPS coords to get a readable label
-  useEffect(() => {
-    if (!gpsCoords || manualCoords) return;
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${gpsCoords.latitude}&lon=${gpsCoords.longitude}&format=json`)
-      .then((r) => r.json())
-      .then((d) => {
-        const a = d.address;
-        setLocationLabel(a.suburb || a.neighbourhood || a.city_district || a.town || a.city || "Your location");
-      })
-      .catch(() => setLocationLabel("Your location"));
-  }, [gpsCoords, manualCoords]);
-
-  const handleLocate = () => {
-    setManualCoords(null);
-    setLocationLabel("");
-    locate();
-  };
-
-  const handleManualCoords = (coords, label) => {
-    setManualCoords(coords);
-    setLocationLabel(label);
-  };
-
-  const handleClearLocation = () => {
-    setManualCoords(null);
-    setLocationLabel("");
-  };
+  const { coords, label, locating, locate, save, clear } = usePersistedLocation();
 
   const recent = useAsync(() => getRecentlyViewed(), []);
   const favoritesData = useAsync(() => fetchMyFavorites(), []);
   const nearby = useAsync(
     () =>
       fetchShops(
-        activeCoords
-          ? { lat: activeCoords.latitude, lng: activeCoords.longitude, radius: 25, sort: "distance", limit: 8 }
+        coords
+          ? { lat: coords.latitude, lng: coords.longitude, radius: 25, sort: "distance", limit: 8 }
           : { sort: "rating:desc", limit: 8 }
       ),
-    [activeCoords?.latitude, activeCoords?.longitude]
+    [coords?.latitude, coords?.longitude]
   );
 
   const handleSearch = (value) => {
@@ -226,12 +233,9 @@ export default function CustomerDashboard() {
         {!favoritesData.loading && favoriteShops.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {favoriteShops.map((shop) => (
-              <ShopCard
-                key={shop._id}
-                shop={shop}
+              <ShopCard key={shop._id} shop={shop}
                 favorite={favorites.shopIds.has(String(shop._id))}
-                onToggleFavorite={(next) => favorites.toggleShop(String(shop._id), next)}
-              />
+                onToggleFavorite={(next) => favorites.toggleShop(String(shop._id), next)} />
             ))}
           </div>
         )}
@@ -246,49 +250,44 @@ export default function CustomerDashboard() {
         {!favoritesData.loading && favoriteProducts.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {favoriteProducts.map((product) => (
-              <ProductCard
-                key={product._id}
-                product={product}
+              <ProductCard key={product._id} product={product}
                 favorite={favorites.productIds.has(String(product._id))}
-                onToggleFavorite={(next) => favorites.toggleProduct(String(product._id), next)}
-              />
+                onToggleFavorite={(next) => favorites.toggleProduct(String(product._id), next)} />
             ))}
           </div>
         )}
       </Section>
 
       {/* ================= RECOMMENDED NEAR YOU ================= */}
-      <Section title="Recommended Near You">
-        <div className="bg-white border border-border rounded-2xl p-4 mb-4">
-          <p className="text-sm font-medium text-primary mb-3">📍 Choose your location</p>
+      <Section
+        title="Recommended Near You"
+        action={
           <LocationPicker
-            activeCoords={activeCoords}
+            coords={coords}
+            label={label}
             locating={locating}
-            onLocate={handleLocate}
-            onManualCoords={handleManualCoords}
-            locationLabel={locationLabel}
-            onClearLocation={handleClearLocation}
+            onLocate={locate}
+            onManualPick={save}
+            onClear={clear}
           />
-          <p className="text-xs text-secondary mt-3">
-            {activeCoords
-              ? `Showing shops closest to ${locationLabel || "your location"}.`
-              : "Use GPS or type a city name to find shops near you."}
-          </p>
-        </div>
+        }
+      >
+        <p className="text-xs text-secondary -mt-1 mb-3">
+          {coords
+            ? `Showing shops near ${label || "your location"}, sorted by distance.`
+            : "Set your location to see nearby shops with distance."}
+        </p>
         {nearby.loading && <LoadingSkeleton count={4} className="grid-cols-2 sm:grid-cols-4" />}
         {!nearby.loading && nearby.error && <ErrorState onRetry={nearby.retry} />}
         {!nearby.loading && !nearby.error && nearbyShops.length === 0 && (
-          <EmptyState title="No shops found nearby yet." />
+          <EmptyState title="No shops found nearby." />
         )}
         {!nearby.loading && nearbyShops.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {nearbyShops.map((shop) => (
-              <ShopCard
-                key={shop._id}
-                shop={shop}
+              <ShopCard key={shop._id} shop={shop}
                 favorite={favorites.shopIds.has(String(shop._id))}
-                onToggleFavorite={(next) => favorites.toggleShop(String(shop._id), next)}
-              />
+                onToggleFavorite={(next) => favorites.toggleShop(String(shop._id), next)} />
             ))}
           </div>
         )}
@@ -297,16 +296,19 @@ export default function CustomerDashboard() {
   );
 }
 
-function Section({ title, viewAllTo, children }) {
+function Section({ title, viewAllTo, action, children }) {
   return (
     <section className="mt-10 first:mt-8">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-lg font-semibold text-primary">{title}</h2>
-        {viewAllTo && (
-          <Link to={viewAllTo} className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
-            View all <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {action}
+          {viewAllTo && (
+            <Link to={viewAllTo} className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
+              View all <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
+        </div>
       </div>
       {children}
     </section>
