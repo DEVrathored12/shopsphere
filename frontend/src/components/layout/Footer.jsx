@@ -15,7 +15,6 @@ const COLUMNS = [
     heading: "For Business",
     links: [
       { label: "List Your Shop", to: "/for-business" },
-      { label: "Owner Login", to: "/login" },
     ],
   },
   {

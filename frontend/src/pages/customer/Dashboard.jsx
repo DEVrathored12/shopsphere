@@ -259,19 +259,22 @@ export default function CustomerDashboard() {
 
       {/* ================= RECOMMENDED NEAR YOU ================= */}
       <Section title="Recommended Near You">
-        <LocationPicker
-          activeCoords={activeCoords}
-          locating={locating}
-          onLocate={handleLocate}
-          onManualCoords={handleManualCoords}
-          locationLabel={locationLabel}
-          onClearLocation={handleClearLocation}
-        />
-        <p className="text-xs text-secondary mt-2 mb-3">
-          {activeCoords
-            ? "Showing shops closest to your selected location."
-            : "Top-rated shops — use GPS or search a city to see shops near you."}
-        </p>
+        <div className="bg-white border border-border rounded-2xl p-4 mb-4">
+          <p className="text-sm font-medium text-primary mb-3">📍 Choose your location</p>
+          <LocationPicker
+            activeCoords={activeCoords}
+            locating={locating}
+            onLocate={handleLocate}
+            onManualCoords={handleManualCoords}
+            locationLabel={locationLabel}
+            onClearLocation={handleClearLocation}
+          />
+          <p className="text-xs text-secondary mt-3">
+            {activeCoords
+              ? `Showing shops closest to ${locationLabel || "your location"}.`
+              : "Use GPS or type a city name to find shops near you."}
+          </p>
+        </div>
         {nearby.loading && <LoadingSkeleton count={4} className="grid-cols-2 sm:grid-cols-4" />}
         {!nearby.loading && nearby.error && <ErrorState onRetry={nearby.retry} />}
         {!nearby.loading && !nearby.error && nearbyShops.length === 0 && (
