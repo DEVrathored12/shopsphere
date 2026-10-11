@@ -168,65 +168,97 @@ export default function CustomerDashboard() {
   const favoriteProducts = (favoritesData.data?.products || []).slice(0, 4);
   const nearbyShops = nearby.data?.shops || [];
 
+  const isLoading = recent.loading || favoritesData.loading;
+  const totalFavorites = favoriteShops.length + favoriteProducts.length;
+
   return (
     <div>
       <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary">
         {greetingWord()}, {user?.name?.split(" ")[0] || "there"} 👋
       </h1>
 
+      {/* ── Personal stats bar ── */}
+      {!isLoading && (
+        <div className="mt-4 flex flex-wrap gap-3">
+          {[
+            { label: "Recently Viewed", value: recentItems.length, to: "/recently-viewed", show: recentItems.length > 0 },
+            { label: "Favourite Shops", value: favoriteShops.length, to: "/favorites", show: totalFavorites > 0 },
+            { label: "Favourite Products", value: favoriteProducts.length, to: "/favorites", show: totalFavorites > 0 },
+          ]
+            .filter((s) => s.show)
+            .map(({ label, value, to }) => (
+              <Link key={label} to={to}
+                className="flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2 text-sm hover:border-accent/50 transition-colors">
+                <span className="font-bold text-accent">{value}</span>
+                <span className="text-secondary">{label}</span>
+              </Link>
+            ))}
+        </div>
+      )}
+
       <div className="mt-5 max-w-xl">
         <SearchBar value={query} onChange={setQuery} onSubmit={handleSearch} placeholder="What are you looking for today?" size="md" />
       </div>
 
       {/* ================= RECENTLY VIEWED ================= */}
-      <Section title="Recently Viewed" viewAllTo={recentItems.length > 0 ? "/recently-viewed" : null}>
-        {recent.loading && <LoadingSkeleton count={4} />}
-        {!recent.loading && recentItems.length === 0 && (
-          <EmptyState title="Nothing viewed yet." description="Shops and products you look at will show up here." />
-        )}
-        {!recent.loading && recentItems.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {recentItems.map((item) => (
-              <RecentItemCard key={`${item.type}-${item.id}`} item={item} />
-            ))}
-          </div>
-        )}
-      </Section>
+      {(recent.loading || recentItems.length > 0) && (
+        <Section title="Continue Browsing" viewAllTo={recentItems.length > 0 ? "/recently-viewed" : null}>
+          {recent.loading && <LoadingSkeleton count={4} />}
+          {!recent.loading && recentItems.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {recentItems.map((item) => (
+                <RecentItemCard key={`${item.type}-${item.id}`} item={item} />
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
 
       {/* ================= FAVORITE SHOPS ================= */}
-      <Section title="Favorite Shops" viewAllTo={favoriteShops.length > 0 ? "/favorites" : null}>
-        {favoritesData.loading && <LoadingSkeleton count={4} className="grid-cols-2 sm:grid-cols-4" />}
-        {!favoritesData.loading && favoritesData.error && <ErrorState onRetry={favoritesData.retry} />}
-        {!favoritesData.loading && !favoritesData.error && favoriteShops.length === 0 && (
-          <EmptyState title="No favorite shops yet." action={{ label: "Explore Shops", onClick: () => navigate("/explore") }} />
-        )}
-        {!favoritesData.loading && favoriteShops.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {favoriteShops.map((shop) => (
-              <ShopCard key={shop._id} shop={shop}
-                favorite={favorites.shopIds.has(String(shop._id))}
-                onToggleFavorite={(next) => favorites.toggleShop(String(shop._id), next)} />
-            ))}
-          </div>
-        )}
-      </Section>
+      {(favoritesData.loading || favoriteShops.length > 0) && (
+        <Section title="Favourite Shops" viewAllTo={favoriteShops.length > 0 ? "/favorites" : null}>
+          {favoritesData.loading && <LoadingSkeleton count={4} className="grid-cols-2 sm:grid-cols-4" />}
+          {!favoritesData.loading && favoritesData.error && <ErrorState onRetry={favoritesData.retry} />}
+          {!favoritesData.loading && favoriteShops.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {favoriteShops.map((shop) => (
+                <ShopCard key={shop._id} shop={shop}
+                  favorite={favorites.shopIds.has(String(shop._id))}
+                  onToggleFavorite={(next) => favorites.toggleShop(String(shop._id), next)} />
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
 
       {/* ================= FAVORITE PRODUCTS ================= */}
-      <Section title="Favorite Products" viewAllTo={favoriteProducts.length > 0 ? "/favorites" : null}>
-        {favoritesData.loading && <LoadingSkeleton count={4} />}
-        {!favoritesData.loading && !favoritesData.error && favoriteProducts.length === 0 && (
-          <EmptyState title="No favorite products yet." action={{ label: "Explore Shops", onClick: () => navigate("/explore") }} />
-        )}
-        {!favoritesData.loading && favoriteProducts.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {favoriteProducts.map((product) => (
-              <ProductCard key={product._id} product={product}
-                favorite={favorites.productIds.has(String(product._id))}
-                onToggleFavorite={(next) => favorites.toggleProduct(String(product._id), next)} />
-            ))}
-          </div>
-        )}
-      </Section>
+      {(favoritesData.loading || favoriteProducts.length > 0) && (
+        <Section title="Favourite Products" viewAllTo={favoriteProducts.length > 0 ? "/favorites" : null}>
+          {favoritesData.loading && <LoadingSkeleton count={4} />}
+          {!favoritesData.loading && favoriteProducts.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {favoriteProducts.map((product) => (
+                <ProductCard key={product._id} product={product}
+                  favorite={favorites.productIds.has(String(product._id))}
+                  onToggleFavorite={(next) => favorites.toggleProduct(String(product._id), next)} />
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* ================= NEW USER CTA (only when nothing saved yet) ================= */}
+      {!isLoading && recentItems.length === 0 && totalFavorites === 0 && (
+        <div className="mt-8 rounded-3xl border border-border bg-background p-8 text-center">
+          <p className="text-4xl mb-3">🛍️</p>
+          <h2 className="font-display text-xl font-bold text-primary mb-1">Start exploring</h2>
+          <p className="text-secondary text-sm mb-5">Browse local shops and products — your recently viewed and favourites will appear here.</p>
+          <Link to="/explore"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary text-white px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity">
+            Explore now <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
 
       {/* ================= RECOMMENDED NEAR YOU ================= */}
       <Section title="Recommended Near You">

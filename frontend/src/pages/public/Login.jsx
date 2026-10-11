@@ -97,7 +97,7 @@ export default function Login() {
       if (trigSuccess) trigSuccess.fire();
       setTimeout(() => {
         const from = location.state?.from?.pathname;
-        const fallback = u.role === "admin" ? "/admin" : u.role === "shop_owner" ? "/owner/dashboard" : "/dashboard";
+        const fallback = u.role === "admin" ? "/admin" : u.role === "shop_owner" ? "/owner/dashboard" : "/";
         const prefix   = u.role === "admin" ? "/admin" : u.role === "shop_owner" ? "/owner" : "/";
         navigate(from?.startsWith(prefix) ? from : fallback, { replace: true });
       }, 1200);
