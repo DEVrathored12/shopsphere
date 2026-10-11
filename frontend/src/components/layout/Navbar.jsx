@@ -1,12 +1,13 @@
 import { useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown, LayoutDashboard, Heart, Clock, User, LogOut, Store } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Heart, Clock, User, LogOut, Store, Bell, CheckCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Avatar from "../ui/Avatar";
 import Button from "../ui/Button";
 import { useClickOutside } from "../../hooks/useClickOutside";
 import { cn } from "../../lib/cn";
+import { useNotifications } from "../../hooks/useNotifications";
 
 const NAV_LINKS = [
   { to: "/", label: "Home", end: true },
@@ -27,6 +28,89 @@ function profilePathFor(role) {
   if (role === "shop_owner") return "/owner/profile";
   if (role === "admin") return null;
   return "/profile";
+}
+
+function NotificationBell({ navigate, onClose }) {
+  const { notifications, unreadCount, markAllRead } = useNotifications(true);
+  const [open, setOpen] = useState(false);
+  const bellRef = useRef();
+  useClickOutside(bellRef, () => setOpen(false));
+
+  const handleOpen = () => {
+    setOpen((v) => !v);
+    if (!open && unreadCount > 0) markAllRead();
+  };
+
+  return (
+    <div className="relative" ref={bellRef}>
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-background transition-colors"
+      >
+        <Bell className="w-5 h-5 text-primary" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 mt-2 w-80 bg-white border border-border rounded-xl shadow-lg overflow-hidden z-50"
+          >
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <p className="text-sm font-semibold text-primary">Notifications</p>
+              {notifications.length > 0 && (
+                <Link
+                  to="/my-requests"
+                  onClick={() => { setOpen(false); onClose?.(); }}
+                  className="text-xs text-accent hover:underline"
+                >
+                  View all requests
+                </Link>
+              )}
+            </div>
+
+            {notifications.length === 0 ? (
+              <div className="px-4 py-8 text-center">
+                <Bell className="w-8 h-8 text-secondary/30 mx-auto mb-2" />
+                <p className="text-sm text-secondary">No notifications yet</p>
+                <p className="text-xs text-secondary/60 mt-1">Shop responses to your requests will appear here</p>
+              </div>
+            ) : (
+              <div className="max-h-72 overflow-y-auto divide-y divide-border">
+                {notifications.map((n) => (
+                  <Link
+                    key={n.id}
+                    to="/my-requests"
+                    onClick={() => { setOpen(false); onClose?.(); }}
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-accent/5 transition-colors ${!n.seen ? "bg-green-50" : ""}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-primary">
+                        <span className="text-green-700">{n.shopName}</span> has it!
+                      </p>
+                      <p className="text-xs text-secondary line-clamp-1 mt-0.5">{n.requestDescription}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 export default function Navbar() {
@@ -124,6 +208,10 @@ export default function Navbar() {
         {/* Auth buttons */}
         <div className="hidden lg:flex items-center gap-3">
           {isAuthenticated ? (
+            <div className="flex items-center gap-1">
+            {user?.role === "customer" && (
+              <NotificationBell navigate={navigate} onClose={() => setMenuOpen(false)} />
+            )}
             <div className="relative" ref={menuRef}>
               <button
                 type="button"
@@ -170,6 +258,7 @@ export default function Navbar() {
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
             </div>
           ) : (
             <>
