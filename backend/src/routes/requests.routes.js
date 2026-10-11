@@ -6,6 +6,7 @@ import {
   getRequestsForOwner,
   getMyRequests,
   respondToRequest,
+  deleteRequest,
   sendMessage,
   getMessages,
 } from "../controllers/request.controller.js";
@@ -15,6 +16,7 @@ const router = Router();
 router.post("/", protect, createRequest);
 router.get("/owner", protect, authorize("shop_owner"), getRequestsForOwner);
 router.get("/customer", protect, getMyRequests);
+router.delete("/:id", protect, deleteRequest);
 router.patch("/:id/respond", protect, authorize("shop_owner"), respondToRequest);
 router.post("/:id/messages", protect, sendMessage);
 router.get("/:id/messages", protect, getMessages);

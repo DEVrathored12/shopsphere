@@ -15,5 +15,6 @@ export const respondToRequest = (id, status) =>
 export const sendMessage = (id, text) =>
   api.post(`/requests/${id}/messages`, { text }).then((r) => r.data.data);
 
-export const getMessages = (id) =>
-  api.get(`/requests/${id}/messages`).then((r) => r.data.data);
+export const deleteRequest = (id) =>
+  api.delete(`/requests/${id}`).then((r) => r.data);
+

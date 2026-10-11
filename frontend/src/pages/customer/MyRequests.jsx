@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, CheckCircle, XCircle, Phone, Send, X, Loader2, Image as ImageIcon, Camera, Store } from "lucide-react";
+import { MessageCircle, CheckCircle, XCircle, Phone, Send, X, Loader2, Image as ImageIcon, Camera, Store, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getMyRequests, sendMessage, getMessages } from "../../services/requestService";
+import { getMyRequests, sendMessage, getMessages, deleteRequest } from "../../services/requestService";
 import { useAuth } from "../../context/AuthContext";
 import FindItemModal from "../../components/search/FindItemModal";
 
@@ -104,6 +104,19 @@ export default function MyRequests() {
       .finally(() => setLoading(false));
   };
 
+  const [deleting, setDeleting] = useState(null);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this request? This cannot be undone.")) return;
+    setDeleting(id);
+    try {
+      await deleteRequest(id);
+      setRequests((prev) => prev.filter((r) => r._id !== id));
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   useEffect(() => { load(); }, []);
 
   if (loading) {
@@ -160,10 +173,18 @@ export default function MyRequests() {
                   <ImageIcon className="w-5 h-5 text-secondary/40" />
                 </div>
               )}
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-primary font-medium line-clamp-2">{req.description}</p>
                 <p className="text-xs text-secondary/60 mt-1">{new Date(req.createdAt).toLocaleDateString()}</p>
               </div>
+              <button
+                onClick={() => handleDelete(req._id)}
+                disabled={deleting === req._id}
+                className="shrink-0 p-1.5 rounded-lg text-secondary hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                title="Delete request"
+              >
+                {deleting === req._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </button>
             </div>
 
             {/* Responses from shops */}

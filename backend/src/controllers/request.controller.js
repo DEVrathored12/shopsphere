@@ -123,6 +123,20 @@ export const sendMessage = async (req, res, next) => {
   }
 };
 
+// DELETE /api/requests/:id — customer deletes their own request
+export const deleteRequest = async (req, res, next) => {
+  try {
+    const request = await ItemRequest.findById(req.params.id);
+    if (!request) throw new ApiError(404, "Request not found");
+    if (request.customerId.toString() !== req.user._id.toString())
+      throw new ApiError(403, "You can only delete your own requests");
+    await request.deleteOne();
+    return sendSuccess(res, { message: "Request deleted" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/requests/:id/messages — get chat messages
 export const getMessages = async (req, res, next) => {
   try {
