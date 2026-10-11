@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, CheckCircle, XCircle, Phone, Send, X, Loader2, Image as ImageIcon, Camera } from "lucide-react";
+import { MessageCircle, CheckCircle, XCircle, Phone, Send, X, Loader2, Image as ImageIcon, Camera, Store } from "lucide-react";
+import { Link } from "react-router-dom";
 import { getMyRequests, sendMessage, getMessages } from "../../services/requestService";
 import { useAuth } from "../../context/AuthContext";
 import FindItemModal from "../../components/search/FindItemModal";
@@ -186,25 +187,34 @@ export default function MyRequests() {
                     </div>
 
                     {resp.status === "yes" ? (
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
                           <CheckCircle className="w-3.5 h-3.5" /> Has it!
                         </span>
-                        {/* Show phone number when owner says yes */}
-                        {resp.ownerId?.phone && (
-                          <a
-                            href={`tel:${resp.ownerId.phone}`}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-white bg-green-500 rounded-full px-2.5 py-1 hover:bg-green-600"
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {resp.shopId?._id && (
+                            <Link
+                              to={`/shop/${resp.shopId._id}`}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-white bg-accent rounded-full px-2.5 py-1 hover:opacity-90"
+                            >
+                              <Store className="w-3 h-3" /> View Shop
+                            </Link>
+                          )}
+                          {resp.ownerId?.phone && (
+                            <a
+                              href={`tel:${resp.ownerId.phone}`}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-white bg-green-500 rounded-full px-2.5 py-1 hover:bg-green-600"
+                            >
+                              <Phone className="w-3 h-3" /> Call
+                            </a>
+                          )}
+                          <button
+                            onClick={() => setChatState({ request: req, shopResponse: resp })}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-accent border border-accent/30 rounded-full px-2.5 py-1 hover:bg-accent/10"
                           >
-                            <Phone className="w-3 h-3" /> {resp.ownerId.phone}
-                          </a>
-                        )}
-                        <button
-                          onClick={() => setChatState({ request: req, shopResponse: resp })}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-accent border border-accent/30 rounded-full px-2.5 py-1 hover:bg-accent/10"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" /> Chat
-                        </button>
+                            <MessageCircle className="w-3.5 h-3.5" /> Chat
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-xs text-secondary shrink-0">
