@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LocateFixed, MapPin, Search, X, ArrowRight, Loader2, ChevronDown } from "lucide-react";
+import { LocateFixed, MapPin, Search, X, ArrowRight, Loader2 } from "lucide-react";
 
 import SearchBar from "../../components/search/SearchBar";
 import ShopCard from "../../components/cards/ShopCard";
@@ -26,16 +26,15 @@ function greetingWord() {
 
 // ── Location Picker ───────────────────────────────────────────────────────────
 function LocationPicker({ coords, label, locating, onLocate, onManualPick, onClear }) {
-  const [open, setOpen] = useState(false);
   const [cityInput, setCityInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
   const debouncedCity = useDebounce(cityInput, 500);
-  const panelRef = useRef();
+  const dropdownRef = useRef();
 
-  // Geocode suggestions
   useEffect(() => {
-    if (debouncedCity.length < 3) { setSuggestions([]); return; }
+    if (debouncedCity.length < 3) { setSuggestions([]); setOpen(false); return; }
     let cancelled = false;
     setSearching(true);
     fetch(
@@ -50,15 +49,15 @@ function LocationPicker({ coords, label, locating, onLocate, onManualPick, onCle
           latitude: parseFloat(r.lat),
           longitude: parseFloat(r.lon),
         })));
+        setOpen(true);
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setSearching(false); });
     return () => { cancelled = true; };
   }, [debouncedCity]);
 
-  // Close on outside click
   useEffect(() => {
-    const handler = (e) => { if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -70,100 +69,71 @@ function LocationPicker({ coords, label, locating, onLocate, onManualPick, onCle
     setOpen(false);
   };
 
-  const handleLocate = () => {
-    onLocate();
-    setOpen(false);
-  };
-
-  const handleClear = () => {
-    onClear();
-    setOpen(false);
-  };
-
   return (
-    <div className="relative" ref={panelRef}>
-      {/* Trigger button */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 border border-border rounded-full px-4 py-2 bg-white hover:border-accent hover:bg-accent/5 transition-colors text-sm font-medium text-primary"
-      >
-        <MapPin className="w-4 h-4 text-accent shrink-0" />
-        <span className="max-w-[160px] truncate">{coords ? label || "Location set" : "Set location"}</span>
+    <div className="mt-3 space-y-3">
+      {/* Row: GPS + active badge */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onLocate}
+          disabled={locating}
+          className="inline-flex items-center gap-2 bg-accent text-white rounded-full px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
+        >
+          {locating
+            ? <Loader2 className="w-4 h-4 animate-spin" />
+            : <LocateFixed className="w-4 h-4" />}
+          {locating ? "Detecting…" : "Use my location"}
+        </button>
+
         {coords && (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); handleClear(); }}
-            onKeyDown={(e) => e.key === "Enter" && handleClear()}
-            className="ml-1 text-secondary hover:text-red-500 transition-colors"
-          >
-            <X className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-green-50 border border-green-200 rounded-full px-3 py-1.5">
+            <MapPin className="w-3 h-3 text-green-600" />
+            {label || "Location set"}
+            <button type="button" onClick={onClear} className="ml-0.5 hover:text-red-500 transition-colors">
+              <X className="w-3 h-3" />
+            </button>
           </span>
         )}
-        <ChevronDown className={`w-3.5 h-3.5 text-secondary transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
+      </div>
 
-      {/* Dropdown panel */}
-      {open && (
-        <div className="absolute top-full left-0 mt-2 bg-white border border-border rounded-2xl shadow-xl z-30 w-80 overflow-hidden">
-          {/* GPS option */}
-          <button
-            type="button"
-            onClick={handleLocate}
-            disabled={locating}
-            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors border-b border-border disabled:opacity-60"
-          >
-            {locating
-              ? <Loader2 className="w-4 h-4 text-accent animate-spin shrink-0" />
-              : <LocateFixed className="w-4 h-4 text-accent shrink-0" />}
-            <div className="text-left">
-              <p className="text-sm font-medium text-primary">{locating ? "Detecting your location…" : "Use my current location"}</p>
-              <p className="text-xs text-secondary">Uses your device GPS</p>
-            </div>
-          </button>
-
-          {/* City search */}
-          <div className="px-4 py-3 border-b border-border">
-            <div className="flex items-center gap-2 border border-border rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-accent">
-              <Search className="w-4 h-4 text-secondary shrink-0" />
-              <input
-                autoFocus
-                value={cityInput}
-                onChange={(e) => setCityInput(e.target.value)}
-                placeholder="Search city or area…"
-                className="flex-1 text-sm outline-none text-primary placeholder:text-secondary/60"
-              />
-              {searching && <Loader2 className="w-3.5 h-3.5 animate-spin text-secondary shrink-0" />}
-            </div>
-          </div>
-
-          {/* Suggestions */}
-          {suggestions.length > 0 && (
-            <div className="max-h-52 overflow-y-auto">
-              {suggestions.map((s, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => pickSuggestion(s)}
-                  className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left"
-                >
-                  <MapPin className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                  <span className="text-sm text-primary line-clamp-2">{s.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Empty hint */}
-          {cityInput.length > 0 && cityInput.length < 3 && (
-            <p className="px-4 py-3 text-xs text-secondary">Type at least 3 characters to search…</p>
-          )}
-          {cityInput.length >= 3 && !searching && suggestions.length === 0 && (
-            <p className="px-4 py-3 text-xs text-secondary">No locations found. Try a different name.</p>
+      {/* Row: manual city/area search */}
+      <div className="relative" ref={dropdownRef}>
+        <p className="text-xs text-secondary mb-1.5">Or search by city / area:</p>
+        <div className="flex items-center gap-2 border border-border rounded-xl px-3 py-2.5 bg-white focus-within:ring-2 focus-within:ring-accent max-w-sm">
+          <Search className="w-4 h-4 text-secondary shrink-0" />
+          <input
+            value={cityInput}
+            onChange={(e) => setCityInput(e.target.value)}
+            placeholder="e.g. Bandra, Koramangala, Connaught Place…"
+            className="flex-1 text-sm outline-none text-primary placeholder:text-secondary/50"
+          />
+          {searching && <Loader2 className="w-3.5 h-3.5 animate-spin text-secondary shrink-0" />}
+          {cityInput && !searching && (
+            <button type="button" onClick={() => { setCityInput(""); setSuggestions([]); setOpen(false); }}>
+              <X className="w-3.5 h-3.5 text-secondary hover:text-primary" />
+            </button>
           )}
         </div>
-      )}
+
+        {open && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 mt-1 bg-white border border-border rounded-xl shadow-lg z-20 w-full max-w-sm overflow-hidden">
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => pickSuggestion(s)}
+                className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-accent/5 transition-colors text-left"
+              >
+                <MapPin className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                <span className="text-sm text-primary line-clamp-2">{s.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {cityInput.length >= 3 && !searching && suggestions.length === 0 && (
+          <p className="text-xs text-secondary mt-1.5">No locations found. Try a different name.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -259,23 +229,19 @@ export default function CustomerDashboard() {
       </Section>
 
       {/* ================= RECOMMENDED NEAR YOU ================= */}
-      <Section
-        title="Recommended Near You"
-        action={
-          <LocationPicker
-            coords={coords}
-            label={label}
-            locating={locating}
-            onLocate={locate}
-            onManualPick={save}
-            onClear={clear}
-          />
-        }
-      >
-        <p className="text-xs text-secondary -mt-1 mb-3">
+      <Section title="Recommended Near You">
+        <LocationPicker
+          coords={coords}
+          label={label}
+          locating={locating}
+          onLocate={locate}
+          onManualPick={save}
+          onClear={clear}
+        />
+        <p className="text-xs text-secondary mt-3 mb-4">
           {coords
             ? `Showing shops near ${label || "your location"}, sorted by distance.`
-            : "Set your location to see nearby shops with distance."}
+            : "Use GPS or type a city / area name to find nearby shops."}
         </p>
         {nearby.loading && <LoadingSkeleton count={4} className="grid-cols-2 sm:grid-cols-4" />}
         {!nearby.loading && nearby.error && <ErrorState onRetry={nearby.retry} />}

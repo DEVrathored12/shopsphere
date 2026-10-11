@@ -162,6 +162,23 @@ export default function Explore() {
   const pagination = results.data?.pagination;
   const sortOptions = tab === "shops" ? SHOP_SORTS : PRODUCT_SORTS;
 
+  // Detect non-product queries (people, celebrities, places, etc.)
+  const isOffTopicQuery = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    if (!q || (list && list.length > 0)) return false;
+    const offTopicPatterns = [
+      /^[a-z]+ [a-z]+$/, // two-word names like "virat kohli"
+    ];
+    const offTopicWords = [
+      "actor", "actress", "celebrity", "singer", "politician", "player", "cricketer",
+      "footballer", "model", "influencer", "human", "person", "people", "man", "woman",
+      "boy", "girl", "baby", "child", "doctor", "engineer", "teacher", "president",
+      "minister", "king", "queen", "hero", "villain", "character", "movie", "film",
+      "song", "music", "news", "weather", "cricket", "football", "sport",
+    ];
+    return offTopicWords.some((w) => q.includes(w)) || offTopicPatterns.some((p) => p.test(q));
+  }, [debouncedSearch, list]);
+
   return (
     <div className="container-app py-8 sm:py-10">
       {/* ================= SEARCH ================= */}
@@ -218,11 +235,42 @@ export default function Explore() {
       {!results.loading && results.error && <ErrorState onRetry={results.retry} />}
 
       {!results.loading && !results.error && (!list || list.length === 0) && (
-        <EmptyState
-          title="No shops or products found."
-          description="Try changing your search or filters."
-          action={{ label: "Clear Filters", onClick: clearFilters }}
-        />
+        isOffTopicQuery ? (
+          <div className="text-center py-16 max-w-md mx-auto">
+            <div className="text-5xl mb-4">🛍️</div>
+            <h3 className="text-lg font-semibold text-primary mb-2">ShopSphere is for local shops &amp; products</h3>
+            <p className="text-sm text-secondary mb-4">
+              We couldn't find any shops or products matching <strong>"{debouncedSearch}"</strong>.
+              ShopSphere helps you discover local shops, browse their products, and check prices near you.
+            </p>
+            <p className="text-sm text-secondary mb-6">Try searching for something like:</p>
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              {["Shoes", "Denim jacket", "Mobile", "Jewellery", "Grocery", "Bakery"].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSearchInput(s)}
+                  className="text-sm font-medium text-accent border border-accent/30 rounded-full px-3 py-1.5 hover:bg-accent/10 transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setSearchInput(""); clearFilters(); }}
+              className="text-sm text-secondary underline hover:text-primary"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : (
+          <EmptyState
+            title={debouncedSearch ? `No results for "${debouncedSearch}"` : "No shops or products found."}
+            description="Try a different search term or adjust your filters."
+            action={{ label: "Clear Filters", onClick: clearFilters }}
+          />
+        )
       )}
 
       {!results.loading && !results.error && list && list.length > 0 && (
