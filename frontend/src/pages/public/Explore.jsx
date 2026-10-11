@@ -59,11 +59,13 @@ function readFilters(params) {
 
 export default function Explore() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get("tab") === "products" ? "products" : "shops";
+  const q = searchParams.get("q") || "";
+  const tabParam = searchParams.get("tab");
+  const tab = tabParam === "shops" ? "shops" : tabParam === "products" ? "products" : q ? "products" : "shops";
   const sort = searchParams.get("sort") || "";
   const page = parseInt(searchParams.get("page"), 10) || 1;
 
-  const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
+  const [searchInput, setSearchInput] = useState(q);
   const debouncedSearch = useDebounce(searchInput, 400);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftFilters, setDraftFilters] = useState(() => readFilters(searchParams));
@@ -99,7 +101,7 @@ export default function Explore() {
     [searchParams, setSearchParams]
   );
 
-  const switchTab = (nextTab) => updateParams({ tab: nextTab === "shops" ? "" : nextTab, sort: "" });
+  const switchTab = (nextTab) => updateParams({ tab: nextTab, sort: "" });
 
   const openFilters = () => {
     setDraftFilters(filters);
@@ -175,21 +177,21 @@ export default function Explore() {
         <div className="inline-flex bg-white border border-border rounded-full p-1">
           <button
             type="button"
-            onClick={() => switchTab("shops")}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              tab === "shops" ? "bg-accent text-white" : "text-secondary hover:text-primary"
-            }`}
-          >
-            <Store className="w-4 h-4" /> Shops
-          </button>
-          <button
-            type="button"
             onClick={() => switchTab("products")}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               tab === "products" ? "bg-accent text-white" : "text-secondary hover:text-primary"
             }`}
           >
             <Package className="w-4 h-4" /> Products
+          </button>
+          <button
+            type="button"
+            onClick={() => switchTab("shops")}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              tab === "shops" ? "bg-accent text-white" : "text-secondary hover:text-primary"
+            }`}
+          >
+            <Store className="w-4 h-4" /> Shops
           </button>
         </div>
 
