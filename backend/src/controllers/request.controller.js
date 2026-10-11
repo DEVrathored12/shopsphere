@@ -5,7 +5,7 @@ import { sendSuccess, ApiError } from "../utils/apiResponse.js";
 // POST /api/requests — customer creates a request
 export const createRequest = async (req, res, next) => {
   try {
-    const { description, photo, shopId } = req.body;
+    const { description, photo, shopId, categoryId } = req.body;
     if (!description) throw new ApiError(400, "Description is required");
 
     const request = await ItemRequest.create({
@@ -13,6 +13,7 @@ export const createRequest = async (req, res, next) => {
       description,
       photo: photo || "",
       shopId: shopId || null,
+      categoryId: categoryId || null,
     });
 
     return sendSuccess(res, { statusCode: 201, message: "Request posted", data: { request } });
@@ -21,7 +22,7 @@ export const createRequest = async (req, res, next) => {
   }
 };
 
-// GET /api/requests/owner — shop owner sees all open requests (broadcast + targeted to their shop)
+// GET /api/requests/owner — shop owner sees requests matching their shop's category
 export const getRequestsForOwner = async (req, res, next) => {
   try {
     const shop = await Shop.findOne({ ownerId: req.user._id, isActive: true });
@@ -30,6 +31,8 @@ export const getRequestsForOwner = async (req, res, next) => {
     const requests = await ItemRequest.find({
       isActive: true,
       $or: [{ shopId: null }, { shopId: shop._id }],
+      // show requests with no category (broadcast all) OR matching this shop's category
+      $and: [{ $or: [{ categoryId: null }, { categoryId: shop.categoryId }] }],
     })
       .populate("customerId", "name avatar")
       .sort({ createdAt: -1 })

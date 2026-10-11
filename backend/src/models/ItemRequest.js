@@ -17,6 +17,8 @@ const itemRequestSchema = new Schema(
     photo: { type: String, default: "" }, // Cloudinary URL
     // null = broadcast to all shops; set to specific shopId if targeted
     shopId: { type: Schema.Types.ObjectId, ref: "Shop", default: null, index: true },
+    // null = broadcast to all categories; set to filter by category
+    categoryId: { type: Schema.Types.ObjectId, ref: "Category", default: null, index: true },
     // per-shop responses: { shopId -> { status, respondedAt } }
     responses: [
       {

@@ -1,13 +1,16 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, Upload, Loader2, CheckCircle } from "lucide-react";
 import { createRequest } from "../../services/requestService";
 import { uploadImage } from "../../services/uploadService";
+import { fetchCategories } from "../../services/categoryService";
 import { useAuth } from "../../context/AuthContext";
 
 export default function FindItemModal({ open, onClose }) {
   const { user } = useAuth();
   const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
   const [preview, setPreview] = useState(null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -15,8 +18,13 @@ export default function FindItemModal({ open, onClose }) {
   const [error, setError] = useState("");
   const inputRef = useRef();
 
+  useEffect(() => {
+    if (open) fetchCategories().then(setCategories).catch(() => {});
+  }, [open]);
+
   const reset = () => {
     setDescription("");
+    setCategoryId("");
     setPreview(null);
     setFile(null);
     setDone(false);
@@ -51,7 +59,7 @@ export default function FindItemModal({ open, onClose }) {
       if (file) {
         photo = await uploadImage(file);
       }
-      await createRequest({ description: description.trim(), photo });
+      await createRequest({ description: description.trim(), photo, categoryId: categoryId || undefined });
       setDone(true);
     } catch (err) {
       setError(err.message || "Failed to post request");
@@ -93,8 +101,8 @@ export default function FindItemModal({ open, onClose }) {
             {done ? (
               <div className="px-6 py-10 text-center">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                <p className="font-semibold text-primary">Request sent to all shops!</p>
-                <p className="text-sm text-secondary mt-1">Shop owners will notify you if they have it. Check <strong>My Requests</strong> for responses.</p>
+                <p className="font-semibold text-primary">Request sent to matching shops!</p>
+                <p className="text-sm text-secondary mt-1">Shop owners in that category will be notified. Check <strong>My Requests</strong> for responses.</p>
                 <button
                   onClick={handleClose}
                   className="mt-6 px-6 py-2.5 rounded-full bg-accent text-white text-sm font-medium hover:opacity-90 transition-opacity"
@@ -135,9 +143,24 @@ export default function FindItemModal({ open, onClose }) {
                   <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
                 </div>
 
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-primary mb-2">Category (optional)</label>
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm text-primary outline-none focus:ring-2 focus:ring-accent bg-white"
+                  >
+                    <option value="">All categories (broadcast to everyone)</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c._id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-primary mb-2">What are you looking for? *</label>
+                  <label className="block text-sm font-medium text-primary mb-2">What are you looking for?</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -162,7 +185,7 @@ export default function FindItemModal({ open, onClose }) {
                   disabled={loading || !user}
                   className="w-full py-3 rounded-full bg-accent text-white font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Posting…</> : "Send to All Shops"}
+                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Posting…</> : categoryId ? "Send to Category Shops" : "Send to All Shops"}
                 </button>
               </form>
             )}
