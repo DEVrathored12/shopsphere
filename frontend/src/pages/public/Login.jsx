@@ -97,9 +97,13 @@ export default function Login() {
       if (trigSuccess) trigSuccess.fire();
       setTimeout(() => {
         const from = location.state?.from?.pathname;
-        const fallback = u.role === "admin" ? "/admin" : u.role === "shop_owner" ? "/owner/dashboard" : "/";
-        const prefix   = u.role === "admin" ? "/admin" : u.role === "shop_owner" ? "/owner" : "/";
-        navigate(from?.startsWith(prefix) ? from : fallback, { replace: true });
+        if (u.role === "admin") {
+          navigate(from?.startsWith("/admin") ? from : "/admin", { replace: true });
+        } else if (u.role === "shop_owner") {
+          navigate(from?.startsWith("/owner") ? from : "/owner/dashboard", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
       }, 1200);
     } catch (err) {
       if (trigFail) trigFail.fire();
