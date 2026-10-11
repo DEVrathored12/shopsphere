@@ -252,7 +252,7 @@ export default function Login() {
                   onFocus={handleEmailFocus}
                   onBlur={handleEmailBlur}
                   placeholder="you@example.com"
-                  className="w-full rounded-2xl border border-border bg-white pl-11 pr-4 py-3.5 text-primary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all text-sm shadow-sm"
+                  className="w-full rounded-2xl border border-border bg-background pl-11 pr-4 py-3.5 text-primary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all text-sm shadow-sm"
                 />
               </div>
             </div>
@@ -271,7 +271,7 @@ export default function Login() {
                   onFocus={handlePasswordFocus}
                   onBlur={handlePasswordBlur}
                   placeholder="••••••••"
-                  className="w-full rounded-2xl border border-border bg-white pl-11 pr-11 py-3.5 text-primary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all text-sm shadow-sm"
+                  className="w-full rounded-2xl border border-border bg-background pl-11 pr-11 py-3.5 text-primary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all text-sm shadow-sm"
                 />
                 <button type="button" onClick={() => setShowPw((v) => !v)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary hover:text-accent transition-colors">
@@ -300,10 +300,10 @@ export default function Login() {
             <div className="flex-1 h-px bg-border" />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Link to="/" className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-white py-3 text-sm font-medium text-primary hover:border-accent/50 hover:bg-accent/5 transition-all shadow-sm">
+            <Link to="/" className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-background py-3 text-sm font-medium text-primary hover:border-accent/50 hover:bg-accent/5 transition-all shadow-sm">
               🛍️ Browse as Guest
             </Link>
-            <Link to="/register" className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-white py-3 text-sm font-medium text-primary hover:border-accent/50 hover:bg-accent/5 transition-all shadow-sm">
+            <Link to="/register" className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-background py-3 text-sm font-medium text-primary hover:border-accent/50 hover:bg-accent/5 transition-all shadow-sm">
               🏪 List My Shop
             </Link>
           </div>

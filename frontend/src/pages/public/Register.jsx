@@ -238,7 +238,7 @@ export default function Register() {
                   className={`relative flex flex-col items-center gap-1 rounded-2xl border-2 py-4 px-3 text-sm font-medium transition-all overflow-hidden ${
                     form.role === value
                       ? "border-accent bg-accent/8 text-accent shadow-md"
-                      : "border-border text-secondary hover:border-accent/40 bg-white"
+                      : "border-border text-secondary hover:border-accent/40 bg-background"
                   }`}
                 >
                   {form.role === value && (
@@ -290,7 +290,7 @@ export default function Register() {
                       onChange={handleChange}
                       onFocus={isPw ? handlePwFocus : handleTextFocus}
                       onBlur={isPw ? handlePwBlur : handleTextBlur}
-                      className="w-full rounded-2xl border border-border bg-white pl-11 pr-11 py-3.5 text-primary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all text-sm shadow-sm"
+                      className="w-full rounded-2xl border border-border bg-background pl-11 pr-11 py-3.5 text-primary placeholder:text-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all text-sm shadow-sm"
                     />
                     {isPw && (
                       <button type="button" onClick={() => togglePw(name)}
